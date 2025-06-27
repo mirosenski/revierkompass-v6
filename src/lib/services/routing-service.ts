@@ -16,6 +16,18 @@ class RoutingService {
   private readonly OSRM_BASE_URL = 'https://router.project-osrm.org/route/v1/driving';
   private readonly VALHALLA_BASE_URL = 'https://valhalla1.openstreetmap.de/route';
   private readonly GRAPHHOPPER_BASE_URL = 'https://graphhopper.com/api/1/route';
+
+  // Proxy URL for CORS handling
+  private readonly PROXY_URL = 'https://cors-anywhere.herokuapp.com/';
+
+  // Simple in-memory cache for previously calculated routes
+  private readonly routeCache: Map<string, RouteResponse> = new Map();
+  private readonly MAX_CACHE_SIZE = 100;
+
+  private buildOSRMUrl(start: Coordinates, end: Coordinates, baseUrl?: string): string {
+    const base = baseUrl || this.OSRM_BASE_URL;
+    return `${base}/${start.lng},${start.lat};${end.lng},${end.lat}?overview=full&geometries=geojson`;
+  }
   
   // Alternative OSRM-Instanzen für Fallback
   private readonly OSRM_FALLBACK_URLS = [
@@ -177,42 +189,50 @@ class RoutingService {
   async calculateSingleRoute(
     start: Coordinates,
     end: Coordinates
-  ): Promise<RouteResponse | null> {
+  ): Promise<RouteResponse> {
+    const cacheKey = `${start.lng}-${start.lat}-${end.lng}-${end.lat}`;
+
+    if (this.routeCache.has(cacheKey)) {
+      return this.routeCache.get(cacheKey)!;
+    }
+
     const request: RouteRequest = { start, end };
-    
+
+    let result: RouteResponse | null = null;
+
     // Try OSRM with multiple fallback URLs
     for (const osrmUrl of this.OSRM_FALLBACK_URLS) {
       try {
-        return await this.calculateWithOSRM(request, osrmUrl);
+        result = await this.calculateWithOSRM(request, osrmUrl);
+        break;
       } catch (error) {
         console.warn(`OSRM ${osrmUrl} failed:`, error);
         continue;
       }
     }
 
-    // Try Valhalla as fallback
-    try {
-      return await this.calculateWithValhalla(request);
-    } catch (error) {
-      console.warn('Valhalla failed, using direct distance:', error);
+    if (!result) {
+      // Try Valhalla as fallback
+      try {
+        result = await this.calculateWithValhalla(request);
+      } catch (error) {
+        console.warn('Valhalla failed, using direct distance:', error);
+      }
     }
 
-    // Fallback to direct distance
-    const distance = this.calculateDirectDistance(start, end);
-    return {
-      coordinates: [
-        [start.lng, start.lat] as [number, number],
-        [end.lng, end.lat] as [number, number]
-      ],
-      distance: distance * 1000,
-      duration: distance * 120 // 2 minutes per km estimate
-    };
+    if (!result) {
+      result = this.createFallbackRoute(start, end);
+    }
+
+    this.saveToCache(cacheKey, result);
+
+    return result;
   }
 
   // OSRM routing implementation with configurable URL
   private async calculateWithOSRM(request: RouteRequest, baseUrl?: string): Promise<RouteResponse> {
     const { start, end } = request;
-    const url = `${baseUrl || this.OSRM_BASE_URL}/${start.lng},${start.lat};${end.lng},${end.lat}?overview=full&geometries=geojson`;
+    const url = `${this.PROXY_URL}${this.buildOSRMUrl(start, end, baseUrl)}`;
 
     const response = await fetch(url, {
       method: 'GET',
@@ -239,6 +259,28 @@ class RoutingService {
       distance: route.distance,
       duration: route.duration
     };
+  }
+
+  private createFallbackRoute(start: Coordinates, end: Coordinates): RouteResponse {
+    const distanceKm = this.calculateDirectDistance(start, end);
+    return {
+      coordinates: [
+        [start.lng, start.lat],
+        [end.lng, end.lat]
+      ],
+      distance: distanceKm * 1000,
+      duration: Math.round((distanceKm / 50) * 3600) // assume 50km/h
+    };
+  }
+
+  private saveToCache(key: string, route: RouteResponse): void {
+    if (this.routeCache.size >= this.MAX_CACHE_SIZE) {
+      const oldest = this.routeCache.keys().next().value;
+      if (oldest) {
+        this.routeCache.delete(oldest);
+      }
+    }
+    this.routeCache.set(key, route);
   }
 
   // Valhalla routing implementation (alternative)
