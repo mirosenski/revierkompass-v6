@@ -111,6 +111,34 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
     console.log('🗺️ Setup Map Sources für', routeResults.length, 'Routen');
 
+    // Test-Linie hinzufügen
+    const testCoordinates = [
+      [startCoordinates.lng, startCoordinates.lat],
+      [9.2195, 48.7309]
+    ];
+
+    if (!map.current!.getSource('test-route')) {
+      map.current!.addSource('test-route', {
+        type: 'geojson',
+        data: {
+          type: 'Feature',
+          geometry: {
+            type: 'LineString',
+            coordinates: testCoordinates
+          }
+        }
+      });
+      map.current!.addLayer({
+        id: 'test-line',
+        type: 'line',
+        source: 'test-route',
+        paint: {
+          'line-color': '#ff0000',
+          'line-width': 5
+        }
+      });
+    }
+
     // Add route sources for each route
     routeResults.forEach((route) => {
       // Sicherstellen, dass die Route-ID gültig ist
@@ -119,8 +147,12 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
         return;
       }
 
+      console.log('🗺️ Route-Koordinaten:', route.route?.coordinates);
       const coordinates =
-        route.route?.coordinates || [[route.coordinates.lng, route.coordinates.lat]];
+        route.route?.coordinates || [
+          [startCoordinates.lng, startCoordinates.lat],
+          [route.coordinates.lng, route.coordinates.lat]
+        ];
 
       console.log('🗺️ Adding route:', route.destinationName, 'with', coordinates.length, 'coordinates');
 

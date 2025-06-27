@@ -22,8 +22,10 @@ class RoutingService {
   private readonly MAX_CACHE_SIZE = 100;
 
   private buildOSRMUrl(start: Coordinates, end: Coordinates, baseUrl?: string): string {
-    const base = baseUrl || this.OSRM_BASE_URL;
-    return `${base}/${start.lng},${start.lat};${end.lng},${end.lat}?overview=full&geometries=geojson`;
+    if (baseUrl) {
+      return `${baseUrl}/${start.lng},${start.lat};${end.lng},${end.lat}?overview=full&geometries=geojson`;
+    }
+    return `http://localhost:3000/route/${start.lng}/${start.lat}/${end.lng}/${end.lat}`;
   }
   
   // Alternative OSRM-Instanzen für Fallback
