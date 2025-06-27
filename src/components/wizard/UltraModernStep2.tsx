@@ -1,5 +1,5 @@
 // UltraModernStep2.tsx (Komplett überarbeitet)
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Building, MapPin, ChevronDown, Search,
@@ -10,10 +10,292 @@ import { useWizardStore } from '@/store/useWizardStore';
 import { useAppStore } from '@/lib/store/app-store';
 import ModernNavigation from '../ModernNavigation';
 import toast from 'react-hot-toast';
+import InteractiveMap from '../map/InteractiveMap';
+
+// Neue Interfaces für moderne UI
+interface Revier {
+  id: string;
+  name: string;
+  address: string;
+  telefon?: string;
+}
+
+interface Praesidium {
+  id: string;
+  name: string;
+  address: string;
+  city: string;
+  telefon?: string;
+  reviere: Revier[];
+  selectedCount: number;
+}
+
+interface PraesidiumCardProps {
+  praesidium: Praesidium;
+  onToggle: (id: string) => void;
+  onExpand: () => void;
+  onStationToggle: (id: string) => void;
+  selectedStations: string[];
+  viewMode: 'grid' | 'list' | 'compact' | 'map';
+  expandedPraesidien: Set<string>;
+}
+
+// Animation Variants
+const animationVariants = {
+  container: {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.05 }
+    }
+  },
+  item: {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
+  },
+  card: {
+    rest: { scale: 1 },
+    hover: { scale: 1.02 },
+    tap: { scale: 0.98 }
+  }
+};
+
+// Neue UI-Komponenten
+const PraesidiumCard: React.FC<PraesidiumCardProps> = ({
+  praesidium,
+  onToggle,
+  onExpand,
+  onStationToggle,
+  selectedStations,
+  viewMode,
+  expandedPraesidien
+}) => {
+  const isSelected = selectedStations.includes(praesidium.id);
+  const selectedReviere = praesidium.reviere.filter(r => selectedStations.includes(r.id));
+
+  return (
+    <motion.div
+      variants={animationVariants.card}
+      initial="rest"
+      whileHover="hover"
+      whileTap="tap"
+      className={`p-6 rounded-xl border transition-all duration-200 ${
+        isSelected 
+          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-md' 
+          : 'border-gray-200 dark:border-gray-600 hover:border-gray-300'
+      }`}
+      onClick={() => onToggle(praesidium.id)}
+      role="button"
+      tabIndex={0}
+      aria-pressed={isSelected}
+    >
+      <div className="flex justify-between items-start mb-4">
+        <div className="flex items-center space-x-3">
+          <Building className="h-6 w-6 text-blue-600" />
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              {praesidium.name}
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              {praesidium.address}
+            </p>
+            {praesidium.telefon && (
+              <p className="text-xs text-gray-500 dark:text-gray-500">
+                {praesidium.telefon}
+              </p>
+            )}
+          </div>
+        </div>
+        
+        <div className="flex items-center space-x-2">
+          {praesidium.selectedCount > 0 && (
+            <div className="px-2 py-1 bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-200 text-xs rounded-full">
+              {praesidium.selectedCount}/{praesidium.reviere.length}
+            </div>
+          )}
+          <CheckCircle2 className={`h-6 w-6 transition-colors ${
+            isSelected ? 'text-blue-500' : 'text-gray-300 dark:text-gray-600'
+          }`} />
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onExpand();
+            }}
+            className="p-1 rounded-full hover:bg-blue-100 dark:hover:bg-blue-800 transition-colors"
+          >
+            <ChevronDown 
+              className={`h-5 w-5 text-gray-400 transition-transform ${
+                expandedPraesidien.has(praesidium.id) ? 'rotate-180' : ''
+              }`} 
+            />
+          </button>
+        </div>
+      </div>
+      
+      {viewMode === 'list' && (
+        <div className="mb-4">
+          <div className="flex justify-between text-xs text-gray-500 mb-1">
+            <span>Auswahl-Fortschritt</span>
+            <span>{selectedReviere.length}/{praesidium.reviere.length}</span>
+          </div>
+          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+            <div 
+              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${(selectedReviere.length / praesidium.reviere.length) * 100}%` }}
+            />
+          </div>
+        </div>
+      )}
+
+      {viewMode === 'grid' && (
+        <AnimatePresence>
+          {expandedPraesidien.has(praesidium.id) && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mt-4 space-y-2"
+            >
+              {praesidium.reviere.map(revier => (
+                <div 
+                  key={revier.id}
+                  className={`p-3 rounded-lg flex items-center justify-between cursor-pointer transition-colors ${
+                    selectedStations.includes(revier.id)
+                      ? 'bg-blue-100 dark:bg-blue-800/30 text-blue-800 dark:text-blue-200'
+                      : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
+                  }`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onStationToggle(revier.id);
+                  }}
+                >
+                  <div className="flex-1">
+                    <span className="text-sm font-medium">{revier.name}</span>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                      {revier.address}
+                    </p>
+                    {revier.telefon && (
+                      <p className="text-xs text-gray-500 dark:text-gray-500">
+                        {revier.telefon}
+                      </p>
+                    )}
+                  </div>
+                  <CheckCircle2 className={`h-5 w-5 transition-colors ${
+                    selectedStations.includes(revier.id) 
+                      ? 'text-blue-500' 
+                      : 'text-gray-300 dark:text-gray-600'
+                  }`} />
+                </div>
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      )}
+    </motion.div>
+  );
+};
+
+const ViewSwitcher: React.FC<{ 
+  activeView: 'grid' | 'list' | 'compact' | 'map'; 
+  setActiveView: (view: 'grid' | 'list' | 'compact' | 'map') => void;
+}> = ({ activeView, setActiveView }) => (
+  <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-1 flex space-x-1">
+    {['grid', 'list', 'compact', 'map'].map((view, i) => (
+      <button
+        key={view}
+        className={`p-2 rounded-md transition-all ${
+          activeView === view 
+            ? 'bg-white dark:bg-gray-800 shadow text-blue-600' 
+            : 'text-gray-500 hover:text-gray-700'
+        }`}
+        onClick={() => setActiveView(view as any)}
+        aria-label={`${view} view`}
+        title={`${view === 'grid' ? 'Raster' : view === 'list' ? 'Liste' : view === 'compact' ? 'Kompakt' : 'Karte'} Ansicht`}
+      >
+        {view === 'grid' && <LayoutGrid className="h-5 w-5" />}
+        {view === 'list' && <LayoutList className="h-5 w-5" />}
+        {view === 'compact' && <div className="h-5 w-5 grid grid-cols-3 gap-0.5">
+          <div className="bg-current rounded-sm" />
+          <div className="bg-current rounded-sm" />
+          <div className="bg-current rounded-sm" />
+          <div className="bg-current rounded-sm" />
+          <div className="bg-current rounded-sm" />
+          <div className="bg-current rounded-sm" />
+          <div className="bg-current rounded-sm" />
+          <div className="bg-current rounded-sm" />
+          <div className="bg-current rounded-sm" />
+        </div>}
+        {view === 'map' && <div className="h-5 w-5 bg-current rounded-full" />}
+      </button>
+    ))}
+  </div>
+);
+
+const SearchBar: React.FC<{ 
+  searchQuery: string; 
+  setSearchQuery: (query: string) => void;
+}> = ({ searchQuery, setSearchQuery }) => (
+  <div className="relative mb-6">
+    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+    <input
+      type="text"
+      placeholder="Suche nach Präsidien, Revieren oder Städten..."
+      value={searchQuery}
+      onChange={(e) => setSearchQuery(e.target.value)}
+      className="w-full pl-12 pr-32 py-4 bg-white dark:bg-gray-800 border-2 border-gray-200 
+               dark:border-gray-700 rounded-2xl focus:ring-2 focus:ring-blue-500 
+               focus:border-transparent transition-all text-gray-900 dark:text-white"
+    />
+    <button className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+      <Mic className="h-5 w-5 text-gray-500" />
+    </button>
+  </div>
+);
+
+// Hilfsfunktion für alle Marker (Präsidien + Reviere)
+function buildAllMapMarkers(stations) {
+  const praesidien = stations.filter(s => s.type === 'praesidium' && s.coordinates);
+  const reviere = stations.filter(s => s.type === 'revier' && s.coordinates);
+
+  return [
+    ...praesidien.map(p => ({
+      id: p.id,
+      destinationId: p.id,
+      destinationName: p.name,
+      destinationType: 'station',
+      address: p.address,
+      coordinates: { lat: p.coordinates[0], lng: p.coordinates[1] },
+      color: '#2563eb',
+      distance: 0,
+      duration: 0,
+      estimatedFuel: 0,
+      estimatedCost: 0,
+      routeType: 'Präsidium',
+      route: { coordinates: [[p.coordinates[1], p.coordinates[0]]], distance: 0, duration: 0 },
+      provider: 'Direct'
+    })),
+    ...reviere.map(r => ({
+      id: r.id,
+      destinationId: r.id,
+      destinationName: r.name,
+      destinationType: 'station',
+      address: r.address,
+      coordinates: { lat: r.coordinates[0], lng: r.coordinates[1] },
+      color: '#22c55e',
+      distance: 0,
+      duration: 0,
+      estimatedFuel: 0,
+      estimatedCost: 0,
+      routeType: 'Revier',
+      route: { coordinates: [[r.coordinates[1], r.coordinates[0]]], distance: 0, duration: 0 },
+      provider: 'Direct'
+    }))
+  ];
+}
 
 const UltraModernStep2: React.FC = () => {
   // States
-  const [activeView, setActiveView] = useState<'grid' | 'map' | 'list'>('grid');
+  const [activeView, setActiveView] = useState<'grid' | 'list' | 'compact' | 'map'>('grid');
   const [activeTab, setActiveTab] = useState<'stations' | 'custom'>('stations');
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -27,6 +309,9 @@ const UltraModernStep2: React.FC = () => {
     city: ''
   });
 
+  // Refs
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
   // Store-Hooks
   const { stations, getStationsByType, getReviereByPraesidium, loadStations } = useStationStore();
   const { selectedStations, setSelectedStations, selectedCustomAddresses, setSelectedCustomAddresses, setStep } = useWizardStore();
@@ -38,12 +323,14 @@ const UltraModernStep2: React.FC = () => {
     loadStations();
   }, [loadStations]);
   
-  // Präsidien mit Revieren
+  // Präsidien mit Revieren und selectedCount
   const praesidien = getStationsByType('praesidium');
   const praesidiumWithReviere = praesidien.map(praesidium => ({
     ...praesidium,
     reviere: getReviereByPraesidium(praesidium.id),
-    isExpanded: expandedPraesidien.has(praesidium.id)
+    isExpanded: expandedPraesidien.has(praesidium.id),
+    selectedCount: getReviereByPraesidium(praesidium.id)
+      .filter(r => selectedStations.includes(r.id)).length
   }));
 
   // Debug: Log wenn Stationen geladen sind
@@ -53,6 +340,17 @@ const UltraModernStep2: React.FC = () => {
     console.log('📊 Ausgewählte Stationen:', selectedStations.length);
     console.log('📊 Ausgewählte Custom Addresses:', selectedCustomAddresses.length);
   }, [stations, praesidien, selectedStations, selectedCustomAddresses]);
+
+  // Screen reader helper
+  const announceToScreenReader = (message: string) => {
+    const announcement = document.createElement('div');
+    announcement.setAttribute('role', 'status');
+    announcement.setAttribute('aria-live', 'polite');
+    announcement.className = 'sr-only';
+    announcement.textContent = message;
+    document.body.appendChild(announcement);
+    setTimeout(() => document.body.removeChild(announcement), 1000);
+  };
 
   // Toggle für Präsidium mit allen Revieren
   const togglePraesidiumWithReviere = (praesidiumId: string) => {
@@ -67,8 +365,10 @@ const UltraModernStep2: React.FC = () => {
     
     if (allSelected) {
       setSelectedStations(selectedStations.filter(id => !allIds.includes(id)));
+      announceToScreenReader(`${praesidium.name} und alle Reviere abgewählt`);
     } else {
       setSelectedStations([...selectedStations.filter(id => !allIds.includes(id)), ...allIds]);
+      announceToScreenReader(`${praesidium.name} und alle Reviere ausgewählt`);
     }
   };
 
@@ -83,13 +383,16 @@ const UltraModernStep2: React.FC = () => {
 
   // Toggle Dropdown für Präsidium
   const togglePraesidiumExpansion = (praesidiumId: string) => {
-    const newExpanded = new Set(expandedPraesidien);
-    if (newExpanded.has(praesidiumId)) {
-      newExpanded.delete(praesidiumId);
-    } else {
-      newExpanded.add(praesidiumId);
-    }
-    setExpandedPraesidien(newExpanded);
+    console.log('Expanding:', praesidiumId, 'Current state:', Array.from(expandedPraesidien));
+    setExpandedPraesidien(prev => {
+      const next = new Set(prev);
+      if (next.has(praesidiumId)) {
+        next.delete(praesidiumId);
+      } else {
+        next.add(praesidiumId);
+      }
+      return next;
+    });
   };
 
   // Custom Address Toggle
@@ -118,6 +421,7 @@ const UltraModernStep2: React.FC = () => {
     setFormData({ name: '', street: '', zipCode: '', city: '' });
     setShowAddForm(false);
     toast.success('Adresse erfolgreich hinzugefügt');
+    announceToScreenReader('Neue Adresse hinzugefügt');
   };
 
   // Delete Custom Address
@@ -164,26 +468,57 @@ const UltraModernStep2: React.FC = () => {
     if (totalSelected === 0) {
       console.log('❌ Keine Ziele ausgewählt');
       toast.error('Bitte wählen Sie mindestens ein Ziel aus');
+      announceToScreenReader('Fehler: Keine Ziele ausgewählt');
       return;
     }
     
     console.log('✅ Weiterleitung zu Step 3');
     toast.success(`${totalSelected} Ziele ausgewählt`);
-    setWizardStep(3); // Korrigiert für korrekte Navigation
+    announceToScreenReader(`${totalSelected} Ziele ausgewählt - Weiter zur Routenberechnung`);
+    setWizardStep(3);
   };
 
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.metaKey && e.key === 'k') {
+      // Command/Ctrl + K: Open command palette
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
         setShowCommandPalette(true);
+      }
+      
+      // Command/Ctrl + /: Focus search
+      if ((e.metaKey || e.ctrlKey) && e.key === '/') {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+      
+      // Command/Ctrl + 1-4: Switch views
+      if ((e.metaKey || e.ctrlKey) && ['1', '2', '3', '4'].includes(e.key)) {
+        e.preventDefault();
+        const views: ('grid' | 'list' | 'compact' | 'map')[] = ['grid', 'list', 'compact', 'map'];
+        setActiveView(views[parseInt(e.key) - 1]);
+        announceToScreenReader(`${views[parseInt(e.key) - 1]} Ansicht aktiviert`);
+      }
+      
+      // Command/Ctrl + A: Select all visible
+      if ((e.metaKey || e.ctrlKey) && e.key === 'a' && activeTab === 'stations') {
+        e.preventDefault();
+        const allIds = praesidiumWithReviere.flatMap(p => [p.id, ...p.reviere.map(r => r.id)]);
+        setSelectedStations([...new Set([...selectedStations, ...allIds])]);
+        toast.success(`${allIds.length} Stationen ausgewählt`);
+      }
+      
+      // Escape: Close modals
+      if (e.key === 'Escape') {
+        setShowAddForm(false);
+        setShowCommandPalette(false);
       }
     };
     
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [activeTab, selectedStations, praesidiumWithReviere]);
 
   const tabs = [
     {
@@ -207,42 +542,12 @@ const UltraModernStep2: React.FC = () => {
       {/* Header mit Such- und Ansichts-Optionen */}
       <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
         <div className="relative flex-1 max-w-xl">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Suche nach Präsidien, Revieren oder Adressen..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 focus:ring-2 ring-blue-500 transition-all"
-          />
+          <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
         </div>
         
         <div className="flex items-center space-x-3">
           {/* View Switcher */}
-          <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-1 flex space-x-1">
-            <button
-              onClick={() => setActiveView('grid')}
-              className={`p-2 rounded-md transition-all ${
-                activeView === 'grid' 
-                  ? 'bg-white dark:bg-gray-800 shadow text-blue-600' 
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-              title="Rasteransicht"
-            >
-              <LayoutGrid className="h-5 w-5" />
-            </button>
-            <button
-              onClick={() => setActiveView('list')}
-              className={`p-2 rounded-md transition-all ${
-                activeView === 'list' 
-                  ? 'bg-white dark:bg-gray-800 shadow text-blue-600' 
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-              title="Listenansicht"
-            >
-              <LayoutList className="h-5 w-5" />
-            </button>
-          </div>
+          <ViewSwitcher activeView={activeView} setActiveView={setActiveView} />
           
           {/* Voice Command Button */}
           <button
@@ -316,115 +621,146 @@ const UltraModernStep2: React.FC = () => {
                 transition={{ duration: 0.3 }}
                 className="space-y-6"
               >
-                {/* Präsidien Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {praesidiumWithReviere
-                    .filter(p => 
-                      searchQuery === '' || 
-                      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                      p.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                      p.reviere.some(r => r.name.toLowerCase().includes(searchQuery.toLowerCase()))
-                    )
-                    .map((praesidium) => (
-                      <motion.div
-                        key={praesidium.id}
-                        className={`praesidium-card p-6 rounded-xl border transition-all duration-200 ${
-                          selectedStations.includes(praesidium.id) 
-                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 shadow-md' 
-                            : 'border-gray-200 dark:border-gray-600 hover:border-gray-300'
-                        }`}
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                      >
-                        {/* Präsidium Header - Klick auf Chevron öffnet Dropdown, Klick auf Karte wählt alle */}
-                        <div className="flex justify-between items-start mb-4">
-                          <div 
-                            className="flex items-center space-x-3 cursor-pointer" 
-                            onClick={() => togglePraesidiumWithReviere(praesidium.id)}
+                {/* View Content */}
+                <AnimatePresence mode="wait">
+                  {activeView === 'grid' && (
+                    <motion.div
+                      key="grid"
+                      variants={animationVariants.container}
+                      initial="hidden"
+                      animate="show"
+                      className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                    >
+                      {praesidiumWithReviere
+                        .filter(p => 
+                          searchQuery === '' || 
+                          p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          p.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          p.reviere.some(r => r.name.toLowerCase().includes(searchQuery.toLowerCase()))
+                        )
+                        .map((praesidium) => (
+                          <PraesidiumCard
+                            key={praesidium.id}
+                            praesidium={praesidium}
+                            onToggle={togglePraesidiumWithReviere}
+                            onExpand={() => togglePraesidiumExpansion(praesidium.id)}
+                            onStationToggle={handleStationToggle}
+                            selectedStations={selectedStations}
+                            viewMode="grid"
+                            expandedPraesidien={expandedPraesidien}
+                          />
+                        ))}
+                    </motion.div>
+                  )}
+                  
+                  {activeView === 'list' && (
+                    <motion.div
+                      key="list"
+                      variants={animationVariants.container}
+                      initial="hidden"
+                      animate="show"
+                      className="space-y-4"
+                    >
+                      {praesidiumWithReviere
+                        .filter(p => 
+                          searchQuery === '' || 
+                          p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          p.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          p.reviere.some(r => r.name.toLowerCase().includes(searchQuery.toLowerCase()))
+                        )
+                        .map((praesidium) => (
+                          <motion.div
+                            key={praesidium.id}
+                            layout
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden"
                           >
-                            <Building className="h-6 w-6 text-blue-600" />
-                            <div>
-                              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                                {praesidium.name}
-                              </h3>
-                              <p className="text-sm text-gray-600 dark:text-gray-400">
-                                {praesidium.address}
-                              </p>
-                              <p className="text-xs text-gray-500 dark:text-gray-500">
-                                {praesidium.telefon}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <CheckCircle2 className={`h-6 w-6 transition-colors ${
-                              selectedStations.includes(praesidium.id) 
-                                ? 'text-blue-500' 
-                                : 'text-gray-300 dark:text-gray-600'
-                            }`} />
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                togglePraesidiumExpansion(praesidium.id);
-                              }}
-                              className="p-1 rounded-full hover:bg-blue-100 dark:hover:bg-blue-800 transition-colors"
-                            >
-                              <ChevronDown 
-                                className={`h-5 w-5 text-gray-400 transition-transform ${
-                                  expandedPraesidien.has(praesidium.id) ? 'rotate-180' : ''
-                                }`} 
-                              />
-                            </button>
-                          </div>
-                        </div>
-                        
-                        <div className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                          {praesidium.reviere.length} Reviere verfügbar
-                        </div>
-                        
-                        {/* Reviere-Liste (expandierbar) */}
-                        <AnimatePresence>
-                          {expandedPraesidien.has(praesidium.id) && (
-                            <motion.div
-                              initial={{ opacity: 0, height: 0 }}
-                              animate={{ opacity: 1, height: 'auto' }}
-                              exit={{ opacity: 0, height: 0 }}
-                              className="mt-4 space-y-2"
-                            >
-                              {praesidium.reviere.map(revier => (
-                                <div 
-                                  key={revier.id}
-                                  className={`p-3 rounded-lg flex items-center justify-between cursor-pointer transition-colors ${
-                                    selectedStations.includes(revier.id)
-                                      ? 'bg-blue-100 dark:bg-blue-800/30 text-blue-800 dark:text-blue-200'
-                                      : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'
-                                  }`}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleStationToggle(revier.id);
-                                  }}
-                                >
-                                  <div className="flex-1">
-                                    <span className="text-sm font-medium">{revier.name}</span>
-                                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                                      {revier.address}
-                                    </p>
-                                    <p className="text-xs text-gray-500 dark:text-gray-500">
-                                      {revier.telefon}
-                                    </p>
-                                  </div>
-                                  <CheckCircle2 className={`h-5 w-5 transition-colors ${
-                                    selectedStations.includes(revier.id) 
-                                      ? 'text-blue-500' 
-                                      : 'text-gray-300 dark:text-gray-600'
-                                  }`} />
+                            <PraesidiumCard
+                              praesidium={praesidium}
+                              onToggle={togglePraesidiumWithReviere}
+                              onExpand={() => togglePraesidiumExpansion(praesidium.id)}
+                              onStationToggle={handleStationToggle}
+                              selectedStations={selectedStations}
+                              viewMode="list"
+                              expandedPraesidien={expandedPraesidien}
+                            />
+                          </motion.div>
+                        ))}
+                    </motion.div>
+                  )}
+                  
+                  {activeView === 'compact' && (
+                    <motion.div
+                      key="compact"
+                      variants={animationVariants.container}
+                      initial="hidden"
+                      animate="show"
+                      className="space-y-2"
+                    >
+                      {praesidiumWithReviere
+                        .filter(p => 
+                          searchQuery === '' || 
+                          p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          p.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          p.reviere.some(r => r.name.toLowerCase().includes(searchQuery.toLowerCase()))
+                        )
+                        .map((praesidium) => (
+                          <motion.div
+                            key={praesidium.id}
+                            className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                              praesidium.selectedCount > 0
+                                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                                : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                            }`}
+                            onClick={() => togglePraesidiumWithReviere(praesidium.id)}
+                            whileHover={{ x: 4 }}
+                            role="button"
+                            tabIndex={0}
+                            aria-pressed={praesidium.selectedCount > 0}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-3">
+                                <Building className="h-5 w-5 text-blue-600" />
+                                <div>
+                                  <span className="font-medium text-gray-900 dark:text-white">{praesidium.name}</span>
+                                  <span className="text-sm text-gray-500 dark:text-gray-400 ml-2">({praesidium.city})</span>
                                 </div>
-                              ))}
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </motion.div>
-                    ))}
-                </div>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <span className="text-sm text-gray-500 dark:text-gray-400">{praesidium.reviere.length} Reviere</span>
+                                {praesidium.selectedCount > 0 && (
+                                  <span className="px-2 py-1 bg-blue-600 text-white text-xs rounded-full">
+                                    {praesidium.selectedCount}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </motion.div>
+                        ))}
+                    </motion.div>
+                  )}
+
+                  {activeView === 'map' && (
+                    <div className="py-4">
+                      <InteractiveMap
+                        routeResults={buildAllMapMarkers(stations)}
+                        startAddress="Stuttgart, Schlossplatz"
+                        startCoordinates={{ lat: 48.7784, lng: 9.1806 }}
+                        onMarkerClick={(route) => {
+                          // Marker-Auswahl-Logik: toggle Präsidium oder Revier
+                          const id = route.id;
+                          if (selectedStations.includes(id)) {
+                            setSelectedStations(selectedStations.filter(sid => sid !== id));
+                          } else {
+                            setSelectedStations([...selectedStations, id]);
+                          }
+                        }}
+                      />
+                    </div>
+                  )}
+                </AnimatePresence>
               </motion.div>
             )}
 

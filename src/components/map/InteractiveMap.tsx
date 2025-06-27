@@ -23,12 +23,14 @@ interface InteractiveMapProps {
   routeResults: RouteResult[];
   startAddress: string;
   startCoordinates: { lat: number; lng: number };
+  onMarkerClick?: (route: RouteResult) => void;
 }
 
 const InteractiveMap: React.FC<InteractiveMapProps> = ({
   routeResults,
   startAddress,
-  startCoordinates
+  startCoordinates,
+  onMarkerClick
 }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<MapLibreMap | null>(null);
@@ -249,6 +251,15 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
           </svg>
         </div>
       `;
+
+      // NEU: Klick-Handler für Marker
+      if (onMarkerClick) {
+        markerElement.style.cursor = 'pointer';
+        markerElement.addEventListener('click', (e) => {
+          e.stopPropagation();
+          onMarkerClick(route);
+        });
+      }
 
       const popup = new Popup({ offset: 25 }).setHTML(`
         <div class="p-4 max-w-xs">
@@ -552,4 +563,4 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
   );
 };
 
-export default InteractiveMap;
+export default InteractiveMap; 
