@@ -128,8 +128,37 @@ const StationModal = ({ station, isOpen, onClose, onSave }) => {
     notdienst24h: false,
     isActive: true,
     parentId: '',
-    ...station
   })
+
+  useEffect(() => {
+    if (station && isOpen) {
+      setFormData({
+        name: station.name || '',
+        address: station.address || '',
+        city: station.city || '',
+        telefon: station.telefon || '',
+        email: station.email || '',
+        coordinates: station.coordinates || [0, 0],
+        type: station.type || 'revier',
+        notdienst24h: station.notdienst24h || false,
+        isActive: station.isActive !== false,
+        parentId: station.parentId || '',
+      })
+    } else if (!station && isOpen) {
+      setFormData({
+        name: '',
+        address: '',
+        city: '',
+        telefon: '',
+        email: '',
+        coordinates: [0, 0],
+        type: 'revier',
+        notdienst24h: false,
+        isActive: true,
+        parentId: '',
+      })
+    }
+  }, [station, isOpen])
 
   if (!isOpen) return null
 
@@ -372,6 +401,9 @@ const AdminStationManagement: React.FC = () => {
     }
   }
 
+  // Hilfsfunktion für sichere IDs
+  const safeId = (s: any, idx: number) => (s.id && typeof s.id === 'string' && s.id !== 'NaN') ? s.id : `fallback-${s.name || 'station'}-${idx}`;
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -468,8 +500,8 @@ const AdminStationManagement: React.FC = () => {
       {/* Station Cards */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="space-y-4">
-          {praesidien.map(praesidium => (
-            <div key={praesidium.id}>
+          {praesidien.map((praesidium, pIndex) => (
+            <div key={safeId(praesidium, pIndex)}>
               <StationCard
                 station={praesidium}
                 onEdit={(station) => {
@@ -490,9 +522,9 @@ const AdminStationManagement: React.FC = () => {
               >
                 {expandedPresidia.has(praesidium.id) && (
                   <div className="border-t dark:border-gray-700 p-4 space-y-3">
-                    {getReviere(praesidium.id).map(revier => (
+                    {getReviere(praesidium.id).map((revier, rIndex) => (
                       <StationCard
-                        key={revier.id}
+                        key={safeId(revier, rIndex)}
                         station={revier}
                         onEdit={(station) => {
                           setEditingStation(station)
