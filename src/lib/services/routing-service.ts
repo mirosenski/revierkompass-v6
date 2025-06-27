@@ -17,9 +17,6 @@ class RoutingService {
   private readonly VALHALLA_BASE_URL = 'https://valhalla1.openstreetmap.de/route';
   private readonly GRAPHHOPPER_BASE_URL = 'https://graphhopper.com/api/1/route';
 
-  // Proxy URL for CORS handling
-  private readonly PROXY_URL = 'https://cors-anywhere.herokuapp.com/';
-
   // Simple in-memory cache for previously calculated routes
   private readonly routeCache: Map<string, RouteResponse> = new Map();
   private readonly MAX_CACHE_SIZE = 100;
@@ -232,12 +229,13 @@ class RoutingService {
   // OSRM routing implementation with configurable URL
   private async calculateWithOSRM(request: RouteRequest, baseUrl?: string): Promise<RouteResponse> {
     const { start, end } = request;
-    const url = `${this.PROXY_URL}${this.buildOSRMUrl(start, end, baseUrl)}`;
+    const url = this.buildOSRMUrl(start, end, baseUrl);
 
     const response = await fetch(url, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
+        'User-Agent': 'Revierkompass/1.0'
       },
       // Timeout nach 10 Sekunden
       signal: AbortSignal.timeout(10000)

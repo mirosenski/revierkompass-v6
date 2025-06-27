@@ -379,6 +379,19 @@ const UltraModernStep2: React.FC = () => {
       allDestinations.push(...allStationDestinations);
     }
 
+    // Test-Route hinzufügen für Debugging
+    if (allDestinations.length === 0) {
+      allDestinations.push({
+        id: 'test-route',
+        coordinates: { lat: 48.7758, lng: 9.1829 }, // Stuttgart Hauptbahnhof
+        type: 'praesidium',
+        name: 'Test Route',
+        address: 'Stuttgart Hauptbahnhof'
+      });
+    }
+
+    console.log('🗺️ Starte Routenberechnung für', allDestinations.length, 'Ziele');
+
     try {
       // Rate limiting: Verarbeite Routen in Batches von 3
       const batchSize = 3;
