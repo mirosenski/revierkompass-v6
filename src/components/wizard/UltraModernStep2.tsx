@@ -329,11 +329,13 @@ const UltraModernStep2: React.FC = () => {
     setIsLoading(true);
     const startCoords = { lat: 48.7784, lng: 9.1806 };
     
-    // Nur ausgewählte Stationen routen für bessere Performance
+    // Im Map-View alle Stationen routen, sonst nur ausgewählte
     const selectedStationIds = new Set(selectedStations);
+    const shouldRouteAll = activeView === 'map' || selectedStations.length === 0;
+    
     const allDestinations = [
       ...stations
-        .filter(s => s.type === 'praesidium' && s.coordinates && selectedStationIds.has(s.id))
+        .filter(s => s.type === 'praesidium' && s.coordinates && (shouldRouteAll || selectedStationIds.has(s.id)))
         .map(p => ({
           id: p.id,
           coordinates: { lat: p.coordinates[0], lng: p.coordinates[1] },
@@ -342,7 +344,7 @@ const UltraModernStep2: React.FC = () => {
           address: p.address
         })),
       ...stations
-        .filter(s => s.type === 'revier' && s.coordinates && selectedStationIds.has(s.id))
+        .filter(s => s.type === 'revier' && s.coordinates && (shouldRouteAll || selectedStationIds.has(s.id)))
         .map(r => ({
           id: r.id,
           coordinates: { lat: r.coordinates[0], lng: r.coordinates[1] },
@@ -352,8 +354,8 @@ const UltraModernStep2: React.FC = () => {
         }))
     ];
 
-    // Wenn keine Stationen ausgewählt sind, alle anzeigen (für Map-View)
-    if (allDestinations.length === 0 && activeView === 'map') {
+    // Wenn keine Stationen gefunden wurden, alle anzeigen
+    if (allDestinations.length === 0) {
       const allStationDestinations = [
         ...stations
           .filter(s => s.type === 'praesidium' && s.coordinates)
@@ -512,6 +514,7 @@ const UltraModernStep2: React.FC = () => {
       }
 
       setRoutes(newRoutes);
+      console.log('🗺️ Routen berechnet:', newRoutes.length, 'für', allDestinations.length, 'Ziele');
     } finally {
       setIsLoading(false);
     }
@@ -952,7 +955,7 @@ const UltraModernStep2: React.FC = () => {
                   {activeView === 'map' && (
                     <div className="py-4">
                       <InteractiveMap
-                        routeResults={routes.length > 0 ? routes : buildAllMapMarkers(stations)}
+                        routeResults={routes}
                         startAddress="Stuttgart, Schlossplatz"
                         startCoordinates={{ lat: 48.7784, lng: 9.1806 }}
                         onMarkerClick={(route) => {

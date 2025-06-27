@@ -32,6 +32,8 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
   startCoordinates,
   onMarkerClick
 }) => {
+  console.log('🗺️ InteractiveMap erhält', routeResults.length, 'Routen');
+  
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<MapLibreMap | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
@@ -107,6 +109,8 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
   const setupMapSources = () => {
     if (!map.current) return;
 
+    console.log('🗺️ Setup Map Sources für', routeResults.length, 'Routen');
+
     // Add route sources for each route
     routeResults.forEach((route) => {
       // Sicherstellen, dass die Route-ID gültig ist
@@ -117,6 +121,8 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
       const coordinates =
         route.route?.coordinates || [[route.coordinates.lng, route.coordinates.lat]];
+
+      console.log('🗺️ Adding route:', route.destinationName, 'with', coordinates.length, 'coordinates');
 
       const sourceId = `route-${route.id}`;
 
