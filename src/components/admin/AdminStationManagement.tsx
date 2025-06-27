@@ -17,25 +17,23 @@ const StationCard: React.FC<StationCardProps> = ({ station, onEdit, onDelete, is
   const isPraesidium = station.type === 'praesidium'
   
   return (
-    <div className={`
-      relative overflow-hidden rounded-2xl transition-all duration-300
-      ${isPraesidium 
-        ? 'bg-gradient-to-br from-blue-50/90 to-indigo-50/90 dark:from-blue-900/20 dark:to-indigo-900/20 backdrop-blur-sm shadow-lg' 
-        : 'bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm shadow-md ml-4 md:ml-8'}
-      hover:shadow-xl hover:scale-[1.02] border border-gray-100/50 dark:border-gray-700/50
-    `}>
+    <div className={`relative overflow-hidden rounded-2xl transition-all duration-300 ${
+      isPraesidium 
+        ? 'bg-blue-50 dark:bg-blue-900/10 backdrop-blur-sm shadow-lg' 
+        : 'bg-gray-50 dark:bg-gray-800/50 backdrop-blur-sm shadow-md ml-4 md:ml-8'
+    } hover:shadow-xl hover:scale-[1.01] border border-gray-100/50 dark:border-gray-700/50`}>
       {/* Status Badge */}
       <div className="absolute top-4 right-4 flex gap-2">
         {station.notdienst24h && (
-          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200">
+          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300">
             <Clock className="w-3 h-3" />
             24h
           </span>
         )}
         <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${
           station.isActive 
-            ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-200' 
-            : 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200'
+            ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300' 
+            : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300'
         }`}>
           {station.isActive ? <Check className="w-3 h-3" /> : <X className="w-3 h-3" />}
           {station.isActive ? 'Aktiv' : 'Inaktiv'}
@@ -130,6 +128,8 @@ const StationModal = ({ station, isOpen, onClose, onSave }) => {
     parentId: '',
   })
 
+  const [errors, setErrors] = useState<Record<string, string>>({})
+
   useEffect(() => {
     if (station && isOpen) {
       setFormData({
@@ -162,13 +162,24 @@ const StationModal = ({ station, isOpen, onClose, onSave }) => {
 
   if (!isOpen) return null
 
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {}
+    if (!formData.name) newErrors.name = 'Name ist erforderlich'
+    if (!formData.address) newErrors.address = 'Adresse ist erforderlich'
+    if (!formData.city) newErrors.city = 'Stadt ist erforderlich'
+    if (!formData.telefon) newErrors.telefon = 'Telefon ist erforderlich'
+    if (!formData.coordinates[0] || !formData.coordinates[1]) 
+      newErrors.coordinates = 'Koordinaten sind erforderlich'
+    
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
   const handleSave = () => {
-    if (!formData.name || !formData.address || !formData.city || !formData.telefon || !formData.coordinates[0] || !formData.coordinates[1]) {
-      toast.error('Bitte füllen Sie alle Pflichtfelder aus')
-      return
+    if (validateForm()) {
+      onSave(formData)
+      onClose()
     }
-    onSave(formData)
-    onClose()
   }
 
   return (
@@ -193,8 +204,11 @@ const StationModal = ({ station, isOpen, onClose, onSave }) => {
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className={`w-full px-4 py-2 rounded-lg border ${
+                    errors.name ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                  } dark:bg-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent`}
                 />
+                {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
               </div>
 
               <div>
@@ -219,8 +233,11 @@ const StationModal = ({ station, isOpen, onClose, onSave }) => {
                   type="text"
                   value={formData.address}
                   onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className={`w-full px-4 py-2 rounded-lg border ${
+                    errors.address ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                  } dark:bg-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent`}
                 />
+                {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}
               </div>
 
               <div>
@@ -231,8 +248,11 @@ const StationModal = ({ station, isOpen, onClose, onSave }) => {
                   type="text"
                   value={formData.city}
                   onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className={`w-full px-4 py-2 rounded-lg border ${
+                    errors.city ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                  } dark:bg-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent`}
                 />
+                {errors.city && <p className="text-red-500 text-xs mt-1">{errors.city}</p>}
               </div>
 
               <div>
@@ -243,8 +263,11 @@ const StationModal = ({ station, isOpen, onClose, onSave }) => {
                   type="tel"
                   value={formData.telefon}
                   onChange={(e) => setFormData(prev => ({ ...prev, telefon: e.target.value }))}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className={`w-full px-4 py-2 rounded-lg border ${
+                    errors.telefon ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                  } dark:bg-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent`}
                 />
+                {errors.telefon && <p className="text-red-500 text-xs mt-1">{errors.telefon}</p>}
               </div>
 
               <div>
@@ -267,26 +290,31 @@ const StationModal = ({ station, isOpen, onClose, onSave }) => {
                   <input
                     type="number"
                     step="0.0001"
-                    placeholder="Latitude"
+                    placeholder="Breitengrad"
                     value={formData.coordinates[0]}
                     onChange={(e) => setFormData(prev => ({ 
                       ...prev, 
-                      coordinates: [Number(e.target.value), prev.coordinates[1]]
+                      coordinates: [Number(e.target.value), prev.coordinates[1]] 
                     }))}
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className={`w-full px-4 py-2 rounded-lg border ${
+                      errors.coordinates ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                    } dark:bg-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent`}
                   />
                   <input
                     type="number"
                     step="0.0001"
-                    placeholder="Longitude"
+                    placeholder="Längengrad"
                     value={formData.coordinates[1]}
                     onChange={(e) => setFormData(prev => ({ 
                       ...prev, 
-                      coordinates: [prev.coordinates[0], Number(e.target.value)]
+                      coordinates: [prev.coordinates[0], Number(e.target.value)] 
                     }))}
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className={`w-full px-4 py-2 rounded-lg border ${
+                      errors.coordinates ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
+                    } dark:bg-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent`}
                   />
                 </div>
+                {errors.coordinates && <p className="text-red-500 text-xs mt-1">{errors.coordinates}</p>}
               </div>
 
               <div className="space-y-3">
@@ -437,7 +465,7 @@ const AdminStationManagement: React.FC = () => {
                 setEditingStation(null)
                 setIsModalOpen(true)
               }}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-xl transition-all shadow-lg hover:shadow-xl"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-all shadow-lg hover:shadow-xl"
             >
               <Plus className="w-5 h-5" />
               <span>Neue Station</span>
@@ -448,7 +476,7 @@ const AdminStationManagement: React.FC = () => {
 
       {/* Filters with Glass Effect */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-sm p-4 sm:p-6">
+        <div className="bg-white dark:bg-gray-800 shadow-sm rounded-2xl p-4 sm:p-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
@@ -488,10 +516,22 @@ const AdminStationManagement: React.FC = () => {
               </select>
             </div>
 
-            <div className="flex items-center justify-center sm:justify-end">
+            <div className="flex items-center justify-center sm:justify-end gap-2">
               <span className="text-sm text-gray-600 dark:text-gray-300 font-medium">
                 {filteredStations.length} {filteredStations.length === 1 ? 'Station' : 'Stationen'}
               </span>
+              {(cityFilter || typeFilter !== 'all' || searchTerm) && (
+                <button
+                  onClick={() => {
+                    setSearchTerm('');
+                    setCityFilter('');
+                    setTypeFilter('all');
+                  }}
+                  className="text-sm text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300"
+                >
+                  Filter löschen
+                </button>
+              )}
             </div>
           </div>
         </div>

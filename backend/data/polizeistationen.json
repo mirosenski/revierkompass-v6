@@ -1104,21 +1104,5 @@
     "isActive": true,
     "id": "NaN",
     "parentId": "pp-ulm-1"
-  },
-  {
-    "name": "Igor Mirosenski",
-    "address": "Rohrdommelweg 2, 70378 Stuttgart",
-    "city": "Stuttgart",
-    "telefon": "017654070622",
-    "email": "mirosenski@gmail.com",
-    "type": "praesidium",
-    "notdienst24h": true,
-    "coordinates": [
-      48.825514,
-      9.200718
-    ],
-    "isActive": true,
-    "id": "station-1751026699315",
-    "lastModified": "2025-06-27T12:18:19.315Z"
   }
 ]
