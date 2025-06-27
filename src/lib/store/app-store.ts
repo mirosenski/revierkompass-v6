@@ -176,33 +176,34 @@ export const useAppStore = create<AppState>()(
       
       // Custom Addresses
       customAddresses: [],
-      addCustomAddress: (address) =>
-        set((state) => ({
-          customAddresses: [
-            ...state.customAddresses,
-            {
-              ...address,
-              address: `${address.street}, ${address.zipCode} ${address.city}`,
-              id: `addr_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-              createdAt: new Date(),
-              isSelected: false
-            }
-          ]
-        })),
+      addCustomAddress: (address) => {
+        set((state) => {
+          const newAddress = {
+            ...address,
+            address: `${address.street}, ${address.zipCode} ${address.city}`,
+            id: `addr_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            createdAt: new Date(),
+            isSelected: false
+          };
+          const updatedAddresses = [...state.customAddresses, newAddress];
+          return { customAddresses: updatedAddresses };
+        });
+      },
       updateCustomAddress: (id, updates) =>
         set((state) => ({
           customAddresses: state.customAddresses.map(addr =>
             addr.id === id ? { ...addr, ...updates } : addr
           )
         })),
-      deleteCustomAddress: (id) =>
+      deleteCustomAddress: (id) => {
         set((state) => ({
           customAddresses: state.customAddresses.filter(addr => addr.id !== id),
           wizard: {
             ...state.wizard,
             selectedCustomAddresses: state.wizard.selectedCustomAddresses.filter(addrId => addrId !== id)
           }
-        })),
+        }));
+      },
       toggleCustomAddressSelection: (id) =>
         set((state) => {
           const isSelected = state.wizard.selectedCustomAddresses.includes(id);
@@ -268,6 +269,11 @@ export const useAppStore = create<AppState>()(
         //   routeResults: [] // Don't persist route results
         // }
       }),
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          // Custom-Adressen erfolgreich aus localStorage geladen
+        }
+      },
     }
   )
 );

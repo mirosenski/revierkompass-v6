@@ -96,5 +96,11 @@ app.delete('/api/stationen/:id', (req, res) => {
 
 // Server starten
 app.listen(PORT, () => {
-  console.log(`Server läuft auf http://localhost:${PORT}`);
+  console.log(`🚀 JSON-Server läuft auf http://localhost:${PORT}`);
+  console.log(`📊 API-Endpunkte:`);
+  console.log(`   GET  /api/stationen     - Alle Stationen abrufen`);
+  console.log(`   POST /api/stationen     - Neue Station erstellen`);
+  console.log(`   PUT  /api/stationen/:id - Station aktualisieren`);
+  console.log(`   DELETE /api/stationen/:id - Station löschen`);
+  console.log(`📁 Datenquelle: ${DATA_FILE}`);
 });

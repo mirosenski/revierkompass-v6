@@ -20,12 +20,15 @@ export const useStationStore = create<StationStore>((set, get) => ({
 
   loadStations: async () => {
     if (get().stations.length > 0 || get().isLoading) return
+    console.log('🔄 useStationStore: Lade Stationen...');
     set({ isLoading: true, error: null })
     try {
       const data = await stationService.getAllStations()
+      console.log('✅ useStationStore: Stationen geladen:', data.length);
       set({ stations: data, isLoading: false })
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error'
+      console.error('❌ useStationStore: Fehler beim Laden:', message);
       set({ error: message, isLoading: false })
     }
   },

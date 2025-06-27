@@ -1,50 +1,92 @@
-# React + TypeScript + Vite
+# RevierKompass v6
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Eine moderne Web-Anwendung zur Verwaltung und Navigation von Polizeistationen in Baden-Württemberg.
 
-Currently, two official plugins are available:
+## 🚀 Schnellstart
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### Automatischer Start (Empfohlen)
+```bash
+npm start
+```
+Dies startet automatisch:
+- Backend-Server auf Port 3001
+- Frontend-Server auf Port 5173 (oder höher)
 
-## Expanding the ESLint configuration
+### Manueller Start
+```bash
+# Backend starten
+cd backend && node server.js
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
-
-- Configure the top-level `parserOptions` property like this:
-
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+# Frontend starten (in neuem Terminal)
+npm run dev
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+## 📁 Projektstruktur
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
-
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
 ```
+revierkompass-v6/
+├── backend/
+│   ├── server.js              # JSON-Server für Stationen
+│   │   └── data/
+│   │       └── polizeistationen.json  # Stationen-Daten
+│   └── package.json
+├── src/
+│   ├── components/
+│   │   ├── wizard/            # Wizard-Komponenten
+│   │   │   └── Step2/         # Modulare Step2-Komponente
+│   │   └── admin/             # Admin-Komponenten
+│   ├── services/
+│   │   └── api/               # API-Services
+│   └── store/                 # Zustand-Management
+├── start-dev.sh               # Automatisches Start-Skript
+└── package.json
+```
+
+## 🔧 Technologien
+
+- **Frontend**: React 18, TypeScript, Vite
+- **Backend**: Node.js, Express
+- **Daten**: JSON-Server mit lokaler Datei
+- **Styling**: Tailwind CSS, Radix UI
+- **State Management**: Zustand
+- **Routing**: React Router
+
+## 📊 Features
+
+- ✅ Modulare Step2-Komponente
+- ✅ JSON-Server für Stationen
+- ✅ Automatischer Start
+- ✅ Admin-Bereich für Stationenverwaltung
+- ✅ Custom-Adressen
+- ✅ Responsive Design
+
+## 🛠️ Entwicklung
+
+### Neue Station hinzufügen
+1. Admin-Bereich öffnen
+2. "Neue Station" klicken
+3. Daten eingeben und speichern
+
+### Custom-Adressen
+- Werden im localStorage gespeichert
+- Sind nur für den aktuellen Benutzer sichtbar
+
+## 🚨 Troubleshooting
+
+### Server startet nicht
+```bash
+# Alle Prozesse stoppen
+pkill -f "node server.js"
+pkill -f "npm run dev"
+
+# Neu starten
+npm start
+```
+
+### Daten werden nicht geladen
+- Prüfe ob Backend auf Port 3001 läuft
+- Prüfe die `backend/data/polizeistationen.json` Datei
+
+## 📝 Lizenz
+
+Proprietär - Alle Rechte vorbehalten
