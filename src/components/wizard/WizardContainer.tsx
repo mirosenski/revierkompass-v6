@@ -5,6 +5,7 @@ import { useAppStore } from '@/lib/store/app-store';
 import Step1AddressInputSimple from './Step1AddressInputSimple';
 import UltraModernStep2 from './UltraModernStep2';
 import Step3PremiumExport from './Step3PremiumExport';
+import { fetchStations } from '@/services/api/backend-api.service';
 
 const WizardContainer: React.FC = () => {
   const { wizard, setWizardStep } = useAppStore();
@@ -13,8 +14,7 @@ const WizardContainer: React.FC = () => {
   useEffect(() => {
     const loadStations = async () => {
       try {
-        const response = await fetch('/data/polizeistationen.json');
-        const stations = await response.json();
+        const stations = await fetchStations();
         // Store in app state if needed
         console.log('Polizeistationen geladen:', stations.length);
       } catch (error) {

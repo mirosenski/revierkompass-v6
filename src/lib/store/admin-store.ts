@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { Station } from './app-store';
+import { fetchStations } from '@/services/api/backend-api.service';
 
 export interface AdminStats {
   totalStations: number;
@@ -101,16 +102,11 @@ export const useAdminStore = create<AdminState>((set, get) => ({
     set({ isLoading: true, error: null });
     
     try {
-      const response = await fetch('/data/polizeistationen.json');
-      if (!response.ok) {
-        throw new Error('Failed to load stations');
-      }
-      
-      const stations: Station[] = await response.json();
-      set({ 
+      const stations: Station[] = await fetchStations();
+      set({
         allStations: stations,
         filteredStations: stations,
-        isLoading: false 
+        isLoading: false
       });
       
       // Update filtered stations
