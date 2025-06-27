@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { useStationStore } from '@/store/useStationStore';
 import { useWizardStore } from '@/store/useWizardStore';
-import { useAppStore } from '@/lib/store/app-store';
+import { useAppStore, RouteResult } from '@/lib/store/app-store';
 import ModernNavigation from '../ModernNavigation';
 import toast from 'react-hot-toast';
 import InteractiveMap from '../map/InteractiveMap';
@@ -309,6 +309,11 @@ const UltraModernStep2: React.FC = () => {
     city: ''
   });
 
+  // Routing state
+  const [routes, setRoutes] = useState<RouteResult[]>([]);
+  const [routeCache, setRouteCache] = useState<Record<string, RouteResult>>({});
+  const [isLoading, setIsLoading] = useState(false);
+
   // Refs
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -316,6 +321,111 @@ const UltraModernStep2: React.FC = () => {
   const { stations, getStationsByType, getReviereByPraesidium, loadStations } = useStationStore();
   const { selectedStations, setSelectedStations, selectedCustomAddresses, setSelectedCustomAddresses, setStep } = useWizardStore();
   const { customAddresses, addCustomAddress, deleteCustomAddress, setWizardStep } = useAppStore();
+
+  // Fetch routes from OSRM
+  const fetchRoutes = async () => {
+    setIsLoading(true);
+    const startCoords = { lat: 48.7784, lng: 9.1806 };
+    const allDestinations = [
+      ...stations
+        .filter(s => s.type === 'praesidium' && s.coordinates)
+        .map(p => ({
+          id: p.id,
+          coordinates: { lat: p.coordinates[0], lng: p.coordinates[1] },
+          type: 'praesidium',
+          name: p.name,
+          address: p.address
+        })),
+      ...stations
+        .filter(s => s.type === 'revier' && s.coordinates)
+        .map(r => ({
+          id: r.id,
+          coordinates: { lat: r.coordinates[0], lng: r.coordinates[1] },
+          type: 'revier',
+          name: r.name,
+          address: r.address
+        }))
+    ];
+
+    try {
+      const newRoutes = await Promise.all(
+        allDestinations.map(async dest => {
+          const cacheKey = `${startCoords.lat}-${dest.coordinates.lat}-${dest.coordinates.lng}`;
+
+          if (routeCache[cacheKey]) {
+            return routeCache[cacheKey];
+          }
+
+          try {
+            const response = await fetch(
+              `https://router.project-osrm.org/route/v1/driving/${startCoords.lng},${startCoords.lat};${dest.coordinates.lng},${dest.coordinates.lat}?overview=full&geometries=geojson`
+            );
+
+            if (!response.ok) throw new Error('Routing API Error');
+            const data = await response.json();
+
+            if (data.code !== 'Ok' || !data.routes?.[0]) {
+              throw new Error('No route found');
+            }
+
+            const osrmRoute = data.routes[0];
+            const newRoute: RouteResult = {
+              id: dest.id,
+              destinationId: dest.id,
+              destinationName: dest.name,
+              destinationType: 'station',
+              address: dest.address,
+              coordinates: dest.coordinates,
+              color: dest.type === 'praesidium' ? '#2563eb' : '#22c55e',
+              distance: osrmRoute.distance / 1000,
+              duration: Math.round(osrmRoute.duration / 60),
+              estimatedFuel: (osrmRoute.distance / 1000) * 0.07,
+              estimatedCost: (osrmRoute.distance / 1000) * 0.07 * 1.8,
+              routeType: dest.type === 'praesidium' ? 'Präsidium' : 'Revier',
+              route: {
+                coordinates: osrmRoute.geometry.coordinates,
+                distance: osrmRoute.distance / 1000,
+                duration: Math.round(osrmRoute.duration / 60)
+              },
+              provider: 'OSRM'
+            };
+
+            setRouteCache(prev => ({ ...prev, [cacheKey]: newRoute }));
+            return newRoute;
+          } catch (error) {
+            console.error(`Error routing to ${dest.name}:`, error);
+            return {
+              id: dest.id,
+              destinationId: dest.id,
+              destinationName: dest.name,
+              destinationType: 'station',
+              address: dest.address,
+              coordinates: dest.coordinates,
+              color: dest.type === 'praesidium' ? '#2563eb' : '#22c55e',
+              distance: 0,
+              duration: 0,
+              estimatedFuel: 0,
+              estimatedCost: 0,
+              routeType: dest.type === 'praesidium' ? 'Präsidium' : 'Revier',
+              route: {
+                coordinates: [
+                  [startCoords.lng, startCoords.lat],
+                  [dest.coordinates.lng, dest.coordinates.lat]
+                ],
+                distance: 0,
+                duration: 0
+              },
+              provider: 'Direct (Fallback)'
+            } as RouteResult;
+          }
+        })
+      );
+
+      setRoutes(newRoutes);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
   // Load stations on mount
   useEffect(() => {
@@ -340,6 +450,13 @@ const UltraModernStep2: React.FC = () => {
     console.log('📊 Ausgewählte Stationen:', selectedStations.length);
     console.log('📊 Ausgewählte Custom Addresses:', selectedCustomAddresses.length);
   }, [stations, praesidien, selectedStations, selectedCustomAddresses]);
+
+  // Fetch routes once stations are loaded
+  useEffect(() => {
+    if (stations.length > 0) {
+      fetchRoutes();
+    }
+  }, [stations]);
 
   // Screen reader helper
   const announceToScreenReader = (message: string) => {
@@ -745,7 +862,7 @@ const UltraModernStep2: React.FC = () => {
                   {activeView === 'map' && (
                     <div className="py-4">
                       <InteractiveMap
-                        routeResults={buildAllMapMarkers(stations)}
+                        routeResults={routes.length > 0 ? routes : buildAllMapMarkers(stations)}
                         startAddress="Stuttgart, Schlossplatz"
                         startCoordinates={{ lat: 48.7784, lng: 9.1806 }}
                         onMarkerClick={(route) => {
@@ -943,11 +1060,15 @@ const UltraModernStep2: React.FC = () => {
         {/* Quick Stats */}
         <div className="px-6 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-4">
-            <div className="text-2xl font-bold text-gray-900 dark:text-white">
-              {totalSelected}
-            </div>
+            {isLoading ? (
+              <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-t-transparent"></div>
+            ) : (
+              <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                {totalSelected}
+              </div>
+            )}
             <div className="text-sm text-gray-500 dark:text-gray-400">
-              Ziele ausgewählt
+              {isLoading ? 'Routen werden berechnet...' : 'Ziele ausgewählt'}
             </div>
           </div>
           <div className="flex items-center space-x-3">
