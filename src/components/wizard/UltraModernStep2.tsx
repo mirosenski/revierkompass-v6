@@ -10,7 +10,7 @@ import { useWizardStore } from '@/store/useWizardStore';
 import { useAppStore, RouteResult } from '@/lib/store/app-store';
 import ModernNavigation from '../ModernNavigation';
 import toast from 'react-hot-toast';
-import InteractiveMap from '../map/InteractiveMap';
+import InteractiveMap from '@/components/map/InteractiveMap';
 
 // Neue Interfaces für moderne UI
 interface Revier {

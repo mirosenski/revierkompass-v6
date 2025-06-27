@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Download, FileSpreadsheet, FileText, Copy, Clock, MapPin, Route, Zap, BarChart3, Map, Table, Wifi, WifiOff } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import toast from 'react-hot-toast';
-import InteractiveMap from '../map/InteractiveMap';
+import InteractiveMap from '@/components/map/InteractiveMap';
 import OfflineMapComponent from '../map/OfflineMapComponent';
 import { useWizardStore } from '@/store/useWizardStore';
 import { useAppStore, RouteResult } from '@/lib/store/app-store';
