@@ -109,14 +109,14 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
     // Add route sources for each route
     routeResults.forEach((route) => {
-      // Simulate route geometry (in a real app, this would come from routing service)
-      const routeGeometry = generateRouteGeometry(startCoordinates, route.coordinates);
-      
+      const coordinates =
+        route.route?.coordinates || [[route.coordinates.lng, route.coordinates.lat]];
+
       map.current!.addSource(`route-${route.id}`, {
         type: 'geojson',
         data: {
           type: 'Feature',
-          properties: { 
+          properties: {
             routeId: route.id,
             color: route.color,
             distance: route.distance,
@@ -124,7 +124,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
           },
           geometry: {
             type: 'LineString',
-            coordinates: routeGeometry
+            coordinates
           }
         }
       });
