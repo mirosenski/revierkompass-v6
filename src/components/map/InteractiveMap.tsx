@@ -117,27 +117,33 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
       [9.2195, 48.7309]
     ];
 
-    if (!map.current!.getSource('test-route')) {
-      map.current!.addSource('test-route', {
-        type: 'geojson',
-        data: {
-          type: 'Feature',
-          geometry: {
-            type: 'LineString',
-            coordinates: testCoordinates
-          }
-        }
-      });
-      map.current!.addLayer({
-        id: 'test-line',
-        type: 'line',
-        source: 'test-route',
-        paint: {
-          'line-color': '#ff0000',
-          'line-width': 5
-        }
-      });
+    // Test-Linie: Vorherige Layer/Source entfernen, falls vorhanden
+    if (map.current!.getSource('test-route')) {
+      if (map.current!.getLayer('test-line')) {
+        map.current!.removeLayer('test-line');
+      }
+      map.current!.removeSource('test-route');
     }
+    map.current!.addSource('test-route', {
+      type: 'geojson',
+      data: {
+        type: 'Feature',
+        properties: {},
+        geometry: {
+          type: 'LineString',
+          coordinates: testCoordinates
+        }
+      }
+    });
+    map.current!.addLayer({
+      id: 'test-line',
+      type: 'line',
+      source: 'test-route',
+      paint: {
+        'line-color': '#ff0000',
+        'line-width': 5
+      }
+    });
 
     // Add route sources for each route
     routeResults.forEach((route) => {
@@ -158,10 +164,15 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
       const sourceId = `route-${route.id}`;
 
-      // Prüfen ob Source bereits existiert
+      // Vorherige Layer/Source entfernen, falls vorhanden
       if (map.current!.getSource(sourceId)) {
-        console.warn(`Source ${sourceId} already exists, skipping`);
-        return;
+        if (map.current!.getLayer(`route-line-${route.id}`)) {
+          map.current!.removeLayer(`route-line-${route.id}`);
+        }
+        if (map.current!.getLayer(`route-outline-${route.id}`)) {
+          map.current!.removeLayer(`route-outline-${route.id}`);
+        }
+        map.current!.removeSource(sourceId);
       }
 
       try {
