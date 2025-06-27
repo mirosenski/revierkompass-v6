@@ -109,83 +109,101 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
     // Add route sources for each route
     routeResults.forEach((route) => {
+      // Sicherstellen, dass die Route-ID gültig ist
+      if (!route.id || route.id === 'undefined' || route.id === 'null' || isNaN(Number(route.id))) {
+        console.warn('Invalid route ID:', route.id, 'for route:', route.destinationName);
+        return;
+      }
+
       const coordinates =
         route.route?.coordinates || [[route.coordinates.lng, route.coordinates.lat]];
 
-      map.current!.addSource(`route-${route.id}`, {
-        type: 'geojson',
-        data: {
-          type: 'Feature',
-          properties: {
-            routeId: route.id,
-            color: route.color,
-            distance: route.distance,
-            duration: route.duration
-          },
-          geometry: {
-            type: 'LineString',
-            coordinates
+      const sourceId = `route-${route.id}`;
+
+      // Prüfen ob Source bereits existiert
+      if (map.current!.getSource(sourceId)) {
+        console.warn(`Source ${sourceId} already exists, skipping`);
+        return;
+      }
+
+      try {
+        map.current!.addSource(sourceId, {
+          type: 'geojson',
+          data: {
+            type: 'Feature',
+            properties: {
+              routeId: route.id,
+              color: route.color,
+              distance: route.distance,
+              duration: route.duration
+            },
+            geometry: {
+              type: 'LineString',
+              coordinates
+            }
           }
-        }
-      });
+        });
 
-      // Add route line layer
-      map.current!.addLayer({
-        id: `route-line-${route.id}`,
-        type: 'line',
-        source: `route-${route.id}`,
-        layout: {
-          'line-join': 'round',
-          'line-cap': 'round'
-        },
-        paint: {
-          'line-color': route.color,
-          'line-width': [
-            'case',
-            ['boolean', ['feature-state', 'hover'], false],
-            6,
-            4
-          ],
-          'line-opacity': 0.8
-        }
-      });
+        // Add route line layer
+        map.current!.addLayer({
+          id: `route-line-${route.id}`,
+          type: 'line',
+          source: sourceId,
+          layout: {
+            'line-join': 'round',
+            'line-cap': 'round'
+          },
+          paint: {
+            'line-color': route.color,
+            'line-width': [
+              'case',
+              ['boolean', ['feature-state', 'hover'], false],
+              6,
+              4
+            ],
+            'line-opacity': 0.8
+          }
+        });
 
-      // Add route line outline for better visibility
-      map.current!.addLayer({
-        id: `route-outline-${route.id}`,
-        type: 'line',
-        source: `route-${route.id}`,
-        layout: {
-          'line-join': 'round',
-          'line-cap': 'round'
-        },
-        paint: {
-          'line-color': '#ffffff',
-          'line-width': [
-            'case',
-            ['boolean', ['feature-state', 'hover'], false],
-            8,
-            6
-          ],
-          'line-opacity': 0.5
-        }
-      }, `route-line-${route.id}`);
+        // Add route line outline for better visibility
+        map.current!.addLayer({
+          id: `route-outline-${route.id}`,
+          type: 'line',
+          source: sourceId,
+          layout: {
+            'line-join': 'round',
+            'line-cap': 'round'
+          },
+          paint: {
+            'line-color': '#ffffff',
+            'line-width': [
+              'case',
+              ['boolean', ['feature-state', 'hover'], false],
+              8,
+              6
+            ],
+            'line-opacity': 0.5
+          }
+        }, `route-line-${route.id}`);
 
-      // Add click handlers for routes
-      map.current!.on('click', `route-line-${route.id}`, (e) => {
-        if (e.features && e.features[0]) {
-          showRoutePopup(route, e.lngLat);
-        }
-      });
+        // Add click handlers for routes
+        map.current!.on('click', `route-line-${route.id}`, (e) => {
+          if (e.features && e.features[0]) {
+            showRoutePopup(route, e.lngLat);
+          }
+        });
 
-      // Add hover effects
-      map.current!.on('mouseenter', `route-line-${route.id}`, () => {
-        map.current!.getCanvas().style.cursor = 'pointer';
-      });
+        // Add hover effects
+        map.current!.on('mouseenter', `route-line-${route.id}`, () => {
+          map.current!.getCanvas().style.cursor = 'pointer';
+        });
 
-      map.current!.on('mouseleave', `route-line-${route.id}`, () => {
-        map.current!.getCanvas().style.cursor = '';
-      });
+        map.current!.on('mouseleave', `route-line-${route.id}`, () => {
+          map.current!.getCanvas().style.cursor = '';
+        });
+      } catch (error) {
+        console.error(`Error adding source for route ${route.id}:`, error);
+      }
     });
   };
 
@@ -384,14 +402,22 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
   };
 
   const toggleRouteVisibility = (routeId: string) => {
-    if (!map.current) return;
+    if (!map.current || !routeId || routeId === 'undefined' || routeId === 'null' || isNaN(Number(routeId))) {
+      console.warn('Invalid route ID for visibility toggle:', routeId);
+      return;
+    }
 
     const newVisibility = !routeVisibility[routeId];
     setRouteVisibility(prev => ({ ...prev, [routeId]: newVisibility }));
 
     const visibility = newVisibility ? 'visible' : 'none';
-    map.current.setLayoutProperty(`route-line-${routeId}`, 'visibility', visibility);
-    map.current.setLayoutProperty(`route-outline-${routeId}`, 'visibility', visibility);
+    
+    try {
+      map.current.setLayoutProperty(`route-line-${routeId}`, 'visibility', visibility);
+      map.current.setLayoutProperty(`route-outline-${routeId}`, 'visibility', visibility);
+    } catch (error) {
+      console.error(`Error toggling visibility for route ${routeId}:`, error);
+    }
   };
 
   const changeMapStyle = (styleKey: string) => {
@@ -466,7 +492,9 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
           <div className="absolute top-4 right-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 max-w-xs">
             <h4 className="font-medium text-gray-900 dark:text-white mb-3">Routen-Übersicht</h4>
             <div className="space-y-2 max-h-80 overflow-y-auto">
-              {routeResults.map((route) => (
+              {routeResults
+                .filter(route => route.id && route.id !== 'undefined' && route.id !== 'null' && !isNaN(Number(route.id)))
+                .map((route) => (
                 <div key={route.id} className="flex items-center justify-between">
                   <div className="flex items-center space-x-2 flex-1 min-w-0">
                     <button

@@ -388,8 +388,8 @@ const UltraModernStep2: React.FC = () => {
         const batchRoutes = await Promise.all(
           batch.map(async dest => {
             // Sicherstellen, dass die ID gültig ist
-            if (!dest.id || dest.id === 'undefined' || dest.id === 'null') {
-              console.warn('Invalid destination ID:', dest);
+            if (!dest.id || dest.id === 'undefined' || dest.id === 'null' || isNaN(Number(dest.id))) {
+              console.warn('Invalid destination ID:', dest.id, 'for destination:', dest.name);
               return null;
             }
 
