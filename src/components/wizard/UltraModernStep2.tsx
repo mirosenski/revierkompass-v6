@@ -348,7 +348,10 @@ const UltraModernStep2: React.FC = () => {
                                 {praesidium.name}
                               </h3>
                               <p className="text-sm text-gray-600 dark:text-gray-400">
-                                {praesidium.city}
+                                {praesidium.address}
+                              </p>
+                              <p className="text-xs text-gray-500 dark:text-gray-500">
+                                {praesidium.telefon}
                               </p>
                             </div>
                           </div>
@@ -400,7 +403,15 @@ const UltraModernStep2: React.FC = () => {
                                     handleStationToggle(revier.id);
                                   }}
                                 >
-                                  <span className="text-sm">{revier.name}</span>
+                                  <div className="flex-1">
+                                    <span className="text-sm font-medium">{revier.name}</span>
+                                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                                      {revier.address}
+                                    </p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-500">
+                                      {revier.telefon}
+                                    </p>
+                                  </div>
                                   <CheckCircle2 className={`h-5 w-5 transition-colors ${
                                     selectedStations.includes(revier.id) 
                                       ? 'text-blue-500' 

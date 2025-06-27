@@ -37,9 +37,13 @@ app.post('/api/stationen', (req, res) => {
 
     // ID generieren, falls nicht vorhanden
     if (!newStation.id) {
-      const maxId = stations.reduce((max, station) =>
-        Math.max(max, parseInt(station.id)), 0);
-      newStation.id = (maxId + 1).toString();
+      const timestamp = Date.now();
+      newStation.id = `station-${timestamp}`;
+    }
+
+    // lastModified hinzufügen, falls nicht vorhanden
+    if (!newStation.lastModified) {
+      newStation.lastModified = new Date().toISOString();
     }
 
     stations.push(newStation);
