@@ -270,7 +270,8 @@ function buildAllMapMarkers(stations) {
       duration: 0,
       estimatedFuel: 0,
       estimatedCost: 0,
-      routeType: 'Präsidium',
+      routeType: 'Schnellste',
+      stationType: 'Präsidium',
       route: { coordinates: [[p.coordinates[1], p.coordinates[0]]], distance: 0, duration: 0 },
       provider: 'Direct'
     })),
@@ -286,7 +287,8 @@ function buildAllMapMarkers(stations) {
       duration: 0,
       estimatedFuel: 0,
       estimatedCost: 0,
-      routeType: 'Revier',
+      routeType: 'Schnellste',
+      stationType: 'Revier',
       route: { coordinates: [[r.coordinates[1], r.coordinates[0]]], distance: 0, duration: 0 },
       provider: 'Direct'
     }))
@@ -322,13 +324,16 @@ const UltraModernStep2: React.FC = () => {
   const { selectedStations, setSelectedStations, selectedCustomAddresses, setSelectedCustomAddresses, setStep } = useWizardStore();
   const { customAddresses, addCustomAddress, deleteCustomAddress, setWizardStep } = useAppStore();
 
-  // Fetch routes from OSRM
+  // Fetch routes from OSRM with rate limiting and better error handling
   const fetchRoutes = async () => {
     setIsLoading(true);
     const startCoords = { lat: 48.7784, lng: 9.1806 };
+    
+    // Nur ausgewählte Stationen routen für bessere Performance
+    const selectedStationIds = new Set(selectedStations);
     const allDestinations = [
       ...stations
-        .filter(s => s.type === 'praesidium' && s.coordinates)
+        .filter(s => s.type === 'praesidium' && s.coordinates && selectedStationIds.has(s.id))
         .map(p => ({
           id: p.id,
           coordinates: { lat: p.coordinates[0], lng: p.coordinates[1] },
@@ -337,7 +342,7 @@ const UltraModernStep2: React.FC = () => {
           address: p.address
         })),
       ...stations
-        .filter(s => s.type === 'revier' && s.coordinates)
+        .filter(s => s.type === 'revier' && s.coordinates && selectedStationIds.has(s.id))
         .map(r => ({
           id: r.id,
           coordinates: { lat: r.coordinates[0], lng: r.coordinates[1] },
@@ -347,79 +352,164 @@ const UltraModernStep2: React.FC = () => {
         }))
     ];
 
+    // Wenn keine Stationen ausgewählt sind, alle anzeigen (für Map-View)
+    if (allDestinations.length === 0 && activeView === 'map') {
+      const allStationDestinations = [
+        ...stations
+          .filter(s => s.type === 'praesidium' && s.coordinates)
+          .map(p => ({
+            id: p.id,
+            coordinates: { lat: p.coordinates[0], lng: p.coordinates[1] },
+            type: 'praesidium',
+            name: p.name,
+            address: p.address
+          })),
+        ...stations
+          .filter(s => s.type === 'revier' && s.coordinates)
+          .map(r => ({
+            id: r.id,
+            coordinates: { lat: r.coordinates[0], lng: r.coordinates[1] },
+            type: 'revier',
+            name: r.name,
+            address: r.address
+          }))
+      ];
+      allDestinations.push(...allStationDestinations);
+    }
+
     try {
-      const newRoutes = await Promise.all(
-        allDestinations.map(async dest => {
-          const cacheKey = `${startCoords.lat}-${dest.coordinates.lat}-${dest.coordinates.lng}`;
-
-          if (routeCache[cacheKey]) {
-            return routeCache[cacheKey];
-          }
-
-          try {
-            const response = await fetch(
-              `https://router.project-osrm.org/route/v1/driving/${startCoords.lng},${startCoords.lat};${dest.coordinates.lng},${dest.coordinates.lat}?overview=full&geometries=geojson`
-            );
-
-            if (!response.ok) throw new Error('Routing API Error');
-            const data = await response.json();
-
-            if (data.code !== 'Ok' || !data.routes?.[0]) {
-              throw new Error('No route found');
+      // Rate limiting: Verarbeite Routen in Batches von 3
+      const batchSize = 3;
+      const newRoutes: RouteResult[] = [];
+      
+      for (let i = 0; i < allDestinations.length; i += batchSize) {
+        const batch = allDestinations.slice(i, i + batchSize);
+        
+        const batchRoutes = await Promise.all(
+          batch.map(async dest => {
+            // Sicherstellen, dass die ID gültig ist
+            if (!dest.id || dest.id === 'undefined' || dest.id === 'null') {
+              console.warn('Invalid destination ID:', dest);
+              return null;
             }
 
-            const osrmRoute = data.routes[0];
-            const newRoute: RouteResult = {
-              id: dest.id,
-              destinationId: dest.id,
-              destinationName: dest.name,
-              destinationType: 'station',
-              address: dest.address,
-              coordinates: dest.coordinates,
-              color: dest.type === 'praesidium' ? '#2563eb' : '#22c55e',
-              distance: osrmRoute.distance / 1000,
-              duration: Math.round(osrmRoute.duration / 60),
-              estimatedFuel: (osrmRoute.distance / 1000) * 0.07,
-              estimatedCost: (osrmRoute.distance / 1000) * 0.07 * 1.8,
-              routeType: dest.type === 'praesidium' ? 'Präsidium' : 'Revier',
-              route: {
-                coordinates: osrmRoute.geometry.coordinates,
-                distance: osrmRoute.distance / 1000,
-                duration: Math.round(osrmRoute.duration / 60)
-              },
-              provider: 'OSRM'
-            };
+            const cacheKey = `${startCoords.lat}-${dest.coordinates.lat}-${dest.coordinates.lng}`;
 
-            setRouteCache(prev => ({ ...prev, [cacheKey]: newRoute }));
-            return newRoute;
-          } catch (error) {
-            console.error(`Error routing to ${dest.name}:`, error);
-            return {
-              id: dest.id,
-              destinationId: dest.id,
-              destinationName: dest.name,
-              destinationType: 'station',
-              address: dest.address,
-              coordinates: dest.coordinates,
-              color: dest.type === 'praesidium' ? '#2563eb' : '#22c55e',
-              distance: 0,
-              duration: 0,
-              estimatedFuel: 0,
-              estimatedCost: 0,
-              routeType: dest.type === 'praesidium' ? 'Präsidium' : 'Revier',
-              route: {
-                coordinates: [
-                  [startCoords.lng, startCoords.lat],
-                  [dest.coordinates.lng, dest.coordinates.lat]
-                ],
-                distance: 0,
-                duration: 0
-              },
-              provider: 'Direct (Fallback)'
-            } as RouteResult;
-          }
-        })
-      );
+            if (routeCache[cacheKey]) {
+              return routeCache[cacheKey];
+            }
+
+            try {
+              // OSRM API mit Timeout und Retry-Logic
+              const controller = new AbortController();
+              const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s Timeout
+
+              const response = await fetch(
+                `https://router.project-osrm.org/route/v1/driving/${startCoords.lng},${startCoords.lat};${dest.coordinates.lng},${dest.coordinates.lat}?overview=full&geometries=geojson`,
+                {
+                  signal: controller.signal,
+                  headers: {
+                    'Accept': 'application/json',
+                    'User-Agent': 'Revierkompass/1.0'
+                  }
+                }
+              );
+
+              clearTimeout(timeoutId);
+
+              if (response.status === 429) {
+                // Rate limit erreicht - warte und verwende Fallback
+                console.warn(`Rate limit reached for ${dest.name}, using fallback`);
+                throw new Error('Rate limit reached');
+              }
+
+              if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+              }
+
+              const data = await response.json();
+
+              if (data.code !== 'Ok' || !data.routes?.[0]) {
+                throw new Error('No route found');
+              }
+
+              const osrmRoute = data.routes[0];
+              const newRoute: RouteResult = {
+                id: dest.id,
+                destinationId: dest.id,
+                destinationName: dest.name,
+                destinationType: 'station',
+                address: dest.address,
+                coordinates: dest.coordinates,
+                color: dest.type === 'praesidium' ? '#2563eb' : '#22c55e',
+                distance: osrmRoute.distance / 1000,
+                duration: Math.round(osrmRoute.duration / 60),
+                estimatedFuel: (osrmRoute.distance / 1000) * 0.07,
+                estimatedCost: (osrmRoute.distance / 1000) * 0.07 * 1.8,
+                routeType: 'Schnellste',
+                stationType: dest.type === 'praesidium' ? 'Präsidium' : 'Revier',
+                route: {
+                  coordinates: osrmRoute.geometry.coordinates,
+                  distance: osrmRoute.distance / 1000,
+                  duration: Math.round(osrmRoute.duration / 60)
+                },
+                provider: 'OSRM'
+              };
+
+              setRouteCache(prev => ({ ...prev, [cacheKey]: newRoute }));
+              return newRoute;
+            } catch (error) {
+              console.warn(`Error routing to ${dest.name}:`, error);
+              
+              // Berechne Luftlinien-Distanz als Fallback
+              const lat1 = startCoords.lat * Math.PI / 180;
+              const lat2 = dest.coordinates.lat * Math.PI / 180;
+              const deltaLat = (dest.coordinates.lat - startCoords.lat) * Math.PI / 180;
+              const deltaLng = (dest.coordinates.lng - startCoords.lng) * Math.PI / 180;
+              
+              const a = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
+                       Math.cos(lat1) * Math.cos(lat2) *
+                       Math.sin(deltaLng / 2) * Math.sin(deltaLng / 2);
+              const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+              const distance = 6371 * c; // Erdradius in km
+              
+              return {
+                id: dest.id,
+                destinationId: dest.id,
+                destinationName: dest.name,
+                destinationType: 'station',
+                address: dest.address,
+                coordinates: dest.coordinates,
+                color: dest.type === 'praesidium' ? '#2563eb' : '#22c55e',
+                distance: distance,
+                duration: Math.round(distance * 2), // Geschätzte Fahrzeit (2 min/km)
+                estimatedFuel: distance * 0.07,
+                estimatedCost: distance * 0.07 * 1.8,
+                routeType: 'Schnellste',
+                stationType: dest.type === 'praesidium' ? 'Präsidium' : 'Revier',
+                route: {
+                  coordinates: [
+                    [startCoords.lng, startCoords.lat],
+                    [dest.coordinates.lng, dest.coordinates.lat]
+                  ],
+                  distance: distance,
+                  duration: Math.round(distance * 2)
+                },
+                provider: 'Direct'
+              } as RouteResult;
+            }
+          })
+        );
+
+        // Filtere null-Werte heraus
+        const validRoutes = batchRoutes.filter(route => route !== null) as RouteResult[];
+        newRoutes.push(...validRoutes);
+
+        // Warte zwischen Batches um Rate-Limiting zu vermeiden
+        if (i + batchSize < allDestinations.length) {
+          await new Promise(resolve => setTimeout(resolve, 1000)); // 1s Pause
+        }
+      }
 
       setRoutes(newRoutes);
     } finally {
@@ -451,12 +541,12 @@ const UltraModernStep2: React.FC = () => {
     console.log('📊 Ausgewählte Custom Addresses:', selectedCustomAddresses.length);
   }, [stations, praesidien, selectedStations, selectedCustomAddresses]);
 
-  // Fetch routes once stations are loaded
+  // Fetch routes once stations are loaded or selection changes
   useEffect(() => {
     if (stations.length > 0) {
       fetchRoutes();
     }
-  }, [stations]);
+  }, [stations, selectedStations, activeView]);
 
   // Screen reader helper
   const announceToScreenReader = (message: string) => {

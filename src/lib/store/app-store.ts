@@ -54,6 +54,7 @@ export interface RouteResult {
   estimatedFuel: number; // in liters
   estimatedCost: number; // in euros
   routeType: 'Schnellste' | 'Kürzeste' | 'Ökonomisch';
+  stationType?: 'Präsidium' | 'Revier'; // Für Polizeistationen
   coordinates: Coordinates;
   color: string;
   profile?: string; // Routing-Profil für Offline-Maps

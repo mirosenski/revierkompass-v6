@@ -351,7 +351,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
               <span class="text-gray-600">Optimierung:</span>
               <span class="inline-block px-2 py-1 rounded-full text-white text-xs font-medium" 
                     style="background-color: ${route.color}">
-                ${route.routeType}
+                ${route.stationType || route.routeType}
               </span>
             </div>
           </div>
@@ -360,7 +360,8 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
             <div class="text-xs text-gray-500">
               🟢 Verkehrssituation: Normal<br>
               🛣️ Routentyp: Straße/Autobahn<br>
-              📍 Zieltyp: ${route.destinationType === 'station' ? 'Polizeistation' : 'Eigene Adresse'}
+              📍 Zieltyp: ${route.destinationType === 'station' ? 'Polizeistation' : 'Eigene Adresse'}<br>
+              🔧 Routing-Engine: ${route.provider}
             </div>
           </div>
         </div>
@@ -487,7 +488,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
                         {route.destinationName}
                       </div>
                       <div className="text-xs text-gray-500 dark:text-gray-400">
-                        {route.distance.toFixed(1)}km • {route.duration}min
+                        {route.distance.toFixed(1)}km • {route.duration}min • {route.stationType || route.provider}
                       </div>
                     </div>
                   </div>
