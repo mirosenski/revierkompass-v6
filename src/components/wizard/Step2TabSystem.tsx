@@ -5,6 +5,7 @@ import { useAppStore } from '@/lib/store/app-store';
 import { useAuthStore } from '@/lib/store/auth-store';
 import AddressStorageChoice from '@/components/address/AddressStorageChoice';
 import toast from 'react-hot-toast';
+import { fetchStations } from '@/services/api/backend-api.service';
 
 interface Station {
   id: string;
@@ -61,8 +62,7 @@ const Step2TabSystem: React.FC = () => {
 
   const loadStations = async () => {
     try {
-      const response = await fetch('/data/polizeistationen.json');
-      const data = await response.json();
+      const data = await fetchStations();
       setStations(data);
     } catch (error) {
       console.error('Fehler beim Laden der Polizeistationen:', error);
