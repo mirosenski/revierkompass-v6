@@ -14,7 +14,7 @@ import {
 import { useStationStore } from '@/store/useStationStore';
 import { useWizardStore } from '@/store/useWizardStore';
 import { useAppStore } from '@/lib/store/app-store';
-import ModernNavigation from '../../ModernNavigation';
+import ModernNavigation from '../ModernNavigation';
 import { useStep2Logic } from './hooks/useStep2Logic';
 import SearchBar from './components/SearchBar';
 import ViewSwitcher from './components/ViewSwitcher';

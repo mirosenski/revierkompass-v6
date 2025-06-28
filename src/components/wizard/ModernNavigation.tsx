@@ -1,7 +1,5 @@
 import React, { ReactNode, useEffect, useState } from 'react'
 import StickyBottomBar from './StickyBottomBar'
-import SmartScrollIndicator from './SmartScrollIndicator'
-import FloatingActionMenu from './FloatingActionMenu'
 
 interface ModernNavigationProps {
   totalSelected: number
@@ -31,12 +29,9 @@ const ModernNavigation: React.FC<ModernNavigationProps> = ({ totalSelected, onCo
       {/* Hauptinhalt */}
       <div>{children}</div>
 
-      {/* Mobile/Tablet: Kombinierte Navigation */}
-      {isMobile && (
-        <>
-          <SmartScrollIndicator totalSelected={totalSelected} onContinue={onContinue} />
-          <FloatingActionMenu totalSelected={totalSelected} onContinue={onContinue} />
-        </>
+      {/* Sticky Bottom Bar für alle Geräte */}
+      {totalSelected > 0 && (
+        <StickyBottomBar totalSelected={totalSelected} onContinue={onContinue} disabled={false} />
       )}
     </>
   )
