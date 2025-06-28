@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
-import { Plus, MapPin, AlertTriangle } from 'lucide-react'
+import { Plus, MapPin, AlertTriangle, Database } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import { useAdminStore } from '@/lib/store/admin-store'
 import adminAddressService, { Address, CreateAddressData, UpdateAddressData } from '@/services/api/admin-address.service'
+import { createAllAalenAddresses } from '@/data/aalen-addresses'
 import { AddressFilterState } from './types'
 import AddressCard from './AddressCard'
 import AddressModal from './AddressModal'
@@ -180,6 +181,21 @@ const AdminAddressManagement: React.FC = () => {
     return allStations.filter(s => s.type === 'praesidium' && s.isActive)
   }, [allStations])
 
+  // Handle create all Aalen addresses
+  const handleCreateAllAalenAddresses = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const createdCount = await createAllAalenAddresses();
+      if (createdCount > 0) {
+        await loadAddresses(); // Reload addresses after creation
+      }
+    } catch (error) {
+      console.error('Error creating Aalen addresses:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [loadAddresses]);
+
   // Loading State
   if (isLoading && addresses.length === 0) {
     return (
@@ -249,6 +265,15 @@ const AdminAddressManagement: React.FC = () => {
               >
                 <Plus className="w-5 h-5" />
                 <span className="font-medium">Neue Adresse</span>
+              </button>
+
+              <button
+                onClick={handleCreateAllAalenAddresses}
+                disabled={isLoading}
+                className="flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white rounded-xl transition-all duration-200 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+              >
+                <Database className="w-5 h-5" />
+                <span className="font-medium">Aalen Import</span>
               </button>
             </div>
           </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
-import { Plus, Building2, AlertTriangle, MapPin, BarChart3, Settings } from 'lucide-react'
+import { Plus, Building2, AlertTriangle, MapPin, BarChart3, Settings, Database } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import { useAdminStore } from '@/lib/store/admin-store'
 import { Station } from '@/types/station.types'
@@ -8,6 +8,10 @@ import { LoadingSpinner } from './LoadingSpinner'
 import { StationCard } from './StationCard'
 import { StationModal } from './StationModal'
 import { StationFilters } from './StationFilters'
+import { createAllAalenAddresses } from '@/data/aalen-addresses'
+import { createAllFreiburgAddresses } from '@/data/freiburg-addresses'
+import { createAllHeilbronnAddresses } from '@/data/heilbronn-addresses'
+import { createAllKarlsruheAddresses } from '@/data/karlsruhe-addresses'
 
 // ===== MAIN COMPONENT =====
 const AdminStationManagement: React.FC = () => {
@@ -36,6 +40,10 @@ const AdminStationManagement: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingStation, setEditingStation] = useState<Station | null>(null);
   const [expandedPresidia, setExpandedPresidia] = useState<Set<string>>(new Set());
+  const [isAalenImporting, setIsAalenImporting] = useState(false);
+  const [isFreiburgImporting, setIsFreiburgImporting] = useState(false);
+  const [isHeilbronnImporting, setIsHeilbronnImporting] = useState(false);
+  const [isKarlsruheImporting, setIsKarlsruheImporting] = useState(false);
 
   // Navigation tabs
   const navigationTabs = [
@@ -154,6 +162,62 @@ const AdminStationManagement: React.FC = () => {
     });
   }, []);
 
+  const handleAalenImport = useCallback(async () => {
+    setIsAalenImporting(true);
+    try {
+      const createdCount = await createAllAalenAddresses();
+      if (createdCount > 0) {
+        await loadStations();
+      }
+    } catch (error) {
+      console.error('Fehler beim Aalen-Import:', error);
+    } finally {
+      setIsAalenImporting(false);
+    }
+  }, [loadStations]);
+
+  const handleFreiburgImport = useCallback(async () => {
+    setIsFreiburgImporting(true);
+    try {
+      const createdCount = await createAllFreiburgAddresses();
+      if (createdCount > 0) {
+        await loadStations();
+      }
+    } catch (error) {
+      console.error('Fehler beim Freiburg-Import:', error);
+    } finally {
+      setIsFreiburgImporting(false);
+    }
+  }, [loadStations]);
+
+  const handleHeilbronnImport = useCallback(async () => {
+    setIsHeilbronnImporting(true);
+    try {
+      const createdCount = await createAllHeilbronnAddresses();
+      if (createdCount > 0) {
+        await loadStations();
+      }
+    } catch (error) {
+      console.error('Fehler beim Heilbronn-Import:', error);
+    } finally {
+      setIsHeilbronnImporting(false);
+    }
+  }, [loadStations]);
+
+  const handleKarlsruheImport = useCallback(async () => {
+    setIsKarlsruheImporting(true);
+    try {
+      const createdCount = await createAllKarlsruheAddresses();
+      if (createdCount > 0) {
+        await loadStations();
+      }
+    } catch (error) {
+      console.error('Fehler beim Karlsruhe-Import:', error);
+    } finally {
+      setIsKarlsruheImporting(false);
+    }
+  }, [loadStations]);
+
   // Loading State
   if (isLoading && stations.length === 0) {
     return (
@@ -245,6 +309,14 @@ const AdminStationManagement: React.FC = () => {
               >
                 <Plus className="w-5 h-5" />
                 <span className="font-medium">Neue Station</span>
+              </button>
+              <button
+                onClick={handleKarlsruheImport}
+                disabled={isKarlsruheImporting}
+                className="flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white rounded-xl transition-all duration-200 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+              >
+                <Database className="w-5 h-5" />
+                <span className="font-medium">Karlsruhe Import</span>
               </button>
             </div>
           </div>
