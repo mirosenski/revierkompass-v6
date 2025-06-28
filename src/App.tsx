@@ -41,7 +41,29 @@ function App() {
   };
 
   const handleBackToWizard = () => {
+    console.log('🔄 handleBackToWizard aufgerufen');
     setCurrentView('wizard');
+    
+    try {
+      // Reset Wizard komplett zurück zu Schritt 1 und alle Auswahlen löschen
+      const { resetWizard, setWizardStep } = useAppStore.getState();
+      console.log('🔄 useAppStore resetWizard aufgerufen');
+      resetWizard();
+      setWizardStep(1);
+      
+      // Auch useWizardStore zurücksetzen falls verfügbar
+      try {
+        const { resetWizard: resetWizardStore } = require('@/store/useWizardStore').useWizardStore.getState();
+        console.log('🔄 useWizardStore resetWizard aufgerufen');
+        resetWizardStore();
+      } catch (error) {
+        console.log('⚠️ useWizardStore nicht verfügbar:', error);
+      }
+      
+      console.log('✅ App: Wizard komplett zurückgesetzt - alle Steps und Auswahlen gelöscht');
+    } catch (error) {
+      console.error('❌ Fehler beim Zurücksetzen des Wizards:', error);
+    }
   };
 
   const handleLoginSuccess = () => {

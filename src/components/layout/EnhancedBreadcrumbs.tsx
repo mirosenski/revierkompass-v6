@@ -97,7 +97,31 @@ const EnhancedBreadcrumbs: React.FC<BreadcrumbsProps> = ({ currentView, onNaviga
   const handleBreadcrumbClick = (item: BreadcrumbItem) => {
     if (!item.clickable || !onNavigate) return;
     
+    console.log('🔄 Breadcrumb geklickt:', item.label, item.step);
+    
     if (item.view && item.step !== undefined) {
+      // Wenn auf "Adresse" (Home) geklickt wird, Wizard komplett zurücksetzen
+      if (item.step === 1) {
+        console.log('🔄 Breadcrumb: Klick auf Adresse - Wizard wird komplett zurückgesetzt');
+        try {
+          // Beide Stores zurücksetzen
+          const { resetWizard } = require('@/lib/store/app-store').useAppStore.getState();
+          console.log('🔄 useAppStore resetWizard aufgerufen');
+          resetWizard();
+          
+          try {
+            const { resetWizard: resetWizardStore } = require('@/store/useWizardStore').useWizardStore.getState();
+            console.log('🔄 useWizardStore resetWizard aufgerufen');
+            resetWizardStore();
+          } catch (error) {
+            console.log('⚠️ useWizardStore nicht verfügbar:', error);
+          }
+          
+          console.log('✅ Breadcrumb: Wizard erfolgreich zurückgesetzt');
+        } catch (error) {
+          console.error('❌ Fehler beim Zurücksetzen des Wizards:', error);
+        }
+      }
       onNavigate(item.view, item.step);
     } else if (item.view) {
       onNavigate(item.view);

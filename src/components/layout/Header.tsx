@@ -32,8 +32,12 @@ const Header: React.FC<HeaderProps> = ({ onAdminLogin, onBackToWizard, onGoToAdm
           {/* Logo */}
           <motion.div 
             whileHover={{ scale: 1.02 }}
-            className="flex items-center space-x-4 cursor-pointer"
-            onClick={onBackToWizard}
+            whileTap={{ scale: 0.98 }}
+            className="flex items-center space-x-4 cursor-pointer select-none"
+            onClick={() => {
+              console.log('🔄 Logo geklickt - handleBackToWizard wird aufgerufen');
+              onBackToWizard();
+            }}
           >
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-800 rounded-2xl blur-lg opacity-30"></div>
