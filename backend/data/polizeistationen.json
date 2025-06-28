@@ -1220,5 +1220,88 @@
     "parentId": "pp-stuttgart-1",
     "id": "1751098360181",
     "lastModified": "2025-06-28T08:12:40.181Z"
+  },
+  {
+    "name": "Igor Mirosenski",
+    "type": "revier",
+    "city": "Stuttgart",
+    "address": "Rohrdommelweg 2, 70378 Stuttgart",
+    "coordinates": [
+      9.200718,
+      9.200718
+    ],
+    "telefon": "017654070622",
+    "email": "mirosenski@gmail.com",
+    "notdienst24h": false,
+    "isActive": true,
+    "parentId": "",
+    "id": "1751098682766",
+    "lastModified": "2025-06-28T08:18:02.766Z"
+  },
+  {
+    "name": "Igor Mirosenski",
+    "type": "revier",
+    "city": "Stuttgart",
+    "address": "Rohrdommelweg 2, 70378 Stuttgart",
+    "coordinates": [
+      9.200718,
+      9.200718
+    ],
+    "telefon": "017654070622",
+    "email": "mirosenski@gmail.com",
+    "notdienst24h": false,
+    "isActive": true,
+    "parentId": "pp-stuttgart-1",
+    "id": "1751098702315",
+    "lastModified": "2025-06-28T08:18:22.315Z"
+  },
+  {
+    "name": "Igor Mirosenski",
+    "type": "revier",
+    "city": "Stuttgart",
+    "address": "Rohrdommelweg 2, 70378 Stuttgart",
+    "coordinates": [
+      48.825514,
+      9.200718
+    ],
+    "telefon": "017654070622",
+    "email": "mirosenski@gmail.com",
+    "notdienst24h": false,
+    "isActive": true,
+    "parentId": "pp-stuttgart-1",
+    "id": "1751099098399",
+    "lastModified": "2025-06-28T08:24:58.399Z"
+  },
+  {
+    "name": "Igor Mirosenski",
+    "type": "revier",
+    "city": "Stuttgart",
+    "address": "Rohrdommelweg 2, 70378 Stuttgart",
+    "coordinates": [
+      48.825514,
+      9.200718
+    ],
+    "telefon": "017654070622",
+    "email": "mirosenski@gmail.com",
+    "notdienst24h": false,
+    "isActive": true,
+    "parentId": "pp-stuttgart-1",
+    "id": "1751099218288",
+    "lastModified": "2025-06-28T08:26:58.288Z"
+  },
+  {
+    "name": "Test Revier",
+    "type": "revier",
+    "city": "Stuttgart",
+    "address": "Teststraße 1",
+    "coordinates": [
+      48.7758,
+      9.1829
+    ],
+    "telefon": "0711 123456",
+    "email": "test@test.de",
+    "parentId": "pp-stuttgart-1",
+    "id": "1751099295254",
+    "lastModified": "2025-06-28T08:28:15.254Z"
   }
 ]

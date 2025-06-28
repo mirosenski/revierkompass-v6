@@ -297,15 +297,6 @@ const AdminAddressManagement: React.FC = () => {
     loadAddresses()
   }, [loadAddresses])
 
-  // Lade Adressen auch nach Änderungen neu
-  useEffect(() => {
-    const interval = setInterval(() => {
-      loadAddresses()
-    }, 10000) // Alle 10 Sekunden neu laden
-    
-    return () => clearInterval(interval)
-  }, [loadAddresses])
-
   const handleSave = async (formData: CreateAddressData | UpdateAddressData) => {
     try {
       if (editingAddress) {
@@ -319,6 +310,10 @@ const AdminAddressManagement: React.FC = () => {
         setAddresses(prev => [...prev, newAddress])
         toast.success('Adresse erfolgreich erstellt')
       }
+      
+      // Explizit die Adressen neu laden
+      await loadAddresses()
+      
       setEditingAddress(null)
       setIsModalOpen(false)
     } catch (err) {

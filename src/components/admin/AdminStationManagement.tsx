@@ -411,15 +411,6 @@ const AdminStationManagement: React.FC = () => {
     loadStations()
   }, [loadStations])
 
-  // Lade Stationen auch nach Änderungen neu
-  useEffect(() => {
-    const interval = setInterval(() => {
-      loadStations()
-    }, 10000) // Alle 10 Sekunden neu laden
-    
-    return () => clearInterval(interval)
-  }, [loadStations])
-
   useEffect(() => {
     setExpandedPresidia(new Set(stations.filter(s => s.type === 'praesidium').map(s => s.id)))
   }, [stations])
@@ -475,9 +466,14 @@ const AdminStationManagement: React.FC = () => {
         await createStation(newStationData as Station)
         toast.success('Station erfolgreich erstellt')
       }
+      
+      // Explizit die Stationen neu laden
+      await loadStations()
+      
       setEditingStation(null)
       setIsModalOpen(false)
     } catch (err) {
+      console.error('Fehler beim Speichern:', err)
       toast.error('Fehler beim Speichern')
     }
   }

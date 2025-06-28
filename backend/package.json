@@ -1,17 +1,16 @@
 {
   "name": "revierkompass-backend",
   "version": "1.0.0",
-  "description": "Express.js Backend für RevierKompass mit Prisma/PostgreSQL",
-  "main": "dist/index.js",
+  "description": "Express.js Backend für RevierKompass mit Prisma/SQLite",
+  "main": "simple-server.js",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "build": "tsc",
-    "start": "node dist/index.js",
+    "dev": "node simple-server.js",
+    "start": "node simple-server.js",
     "test": "jest",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
-    "db:seed": "tsx src/scripts/seed.ts",
+    "db:seed": "node seed.js",
     "import-stations:dev": "tsx src/scripts/import-stations-from-excel.ts",
     "import-stations": "tsx src/scripts/import-stations-from-excel.ts"
   },
