@@ -1,10 +1,10 @@
-import express from 'express';
+import { Router } from 'express';
 import { prisma } from '../lib/prisma';
 import { authenticateToken, requireAdmin, logAction } from '../middleware/auth';
 import { validate, createStationSchema, updateStationSchema } from '../middleware/validation';
 import { createLimiter } from '../middleware/rateLimiter';
 
-const router = express.Router();
+const router = Router();
 
 const selectedPraesidien = new Set<string>();
 const autoSelectedReviere = new Set<string>();
