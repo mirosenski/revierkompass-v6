@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -48,6 +49,66 @@ app.get('/api/stationen', (req, res) => {
   } catch (error) {
     console.error('Fehler beim Laden der Stationen:', error);
     res.status(500).json({ error: 'Stationen konnten nicht geladen werden' });
+  }
+});
+
+// Neue Station erstellen
+app.post('/api/stationen', (req, res) => {
+  try {
+    const filePath = path.join(__dirname, 'data', 'polizeistationen.json');
+    const stations = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    const newStation = {
+      ...req.body,
+      id: Date.now().toString(),
+      lastModified: new Date().toISOString()
+    };
+    stations.push(newStation);
+    fs.writeFileSync(filePath, JSON.stringify(stations, null, 2));
+    res.status(201).json(newStation);
+  } catch (error) {
+    console.error('Fehler beim Erstellen der Station:', error);
+    res.status(500).json({ error: 'Station konnte nicht erstellt werden' });
+  }
+});
+
+// Station aktualisieren
+app.put('/api/stationen/:id', (req, res) => {
+  try {
+    const filePath = path.join(__dirname, 'data', 'polizeistationen.json');
+    const stations = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    const index = stations.findIndex(st => st.id === req.params.id);
+    if (index === -1) {
+      return res.status(404).json({ error: 'Station nicht gefunden' });
+    }
+    stations[index] = {
+      ...stations[index],
+      ...req.body,
+      id: stations[index].id,
+      lastModified: new Date().toISOString()
+    };
+    fs.writeFileSync(filePath, JSON.stringify(stations, null, 2));
+    res.status(200).json(stations[index]);
+  } catch (error) {
+    console.error('Fehler beim Aktualisieren der Station:', error);
+    res.status(500).json({ error: 'Station konnte nicht aktualisiert werden' });
+  }
+});
+
+// Station löschen
+app.delete('/api/stationen/:id', (req, res) => {
+  try {
+    const filePath = path.join(__dirname, 'data', 'polizeistationen.json');
+    const stations = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    const index = stations.findIndex(st => st.id === req.params.id);
+    if (index === -1) {
+      return res.status(404).json({ error: 'Station nicht gefunden' });
+    }
+    stations.splice(index, 1);
+    fs.writeFileSync(filePath, JSON.stringify(stations, null, 2));
+    res.status(204).send();
+  } catch (error) {
+    console.error('Fehler beim Löschen der Station:', error);
+    res.status(500).json({ error: 'Station konnte nicht gelöscht werden' });
   }
 });
 
