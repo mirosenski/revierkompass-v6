@@ -54,7 +54,14 @@ app.get('/health', (req, res) => {
 app.get('/api/stationen', async (req, res) => {
   try {
     const stations = await prisma.policeStation.findMany();
-    res.json(stations);
+    
+    // Koordinaten von JSON-String zu Array konvertieren
+    const processedStations = stations.map(station => ({
+      ...station,
+      coordinates: station.coordinates ? JSON.parse(station.coordinates) : null
+    }));
+    
+    res.json(processedStations);
   } catch (error) {
     console.error('Datenbankfehler:', error);
     res.status(500).json({ error: 'Fehler beim Laden der Stationen' });
@@ -70,7 +77,14 @@ app.post('/api/stationen', async (req, res) => {
         coordinates: req.body.coordinates ? JSON.stringify(req.body.coordinates) : null
       }
     });
-    res.status(201).json(newStation);
+    
+    // Koordinaten von JSON-String zu Array konvertieren
+    const processedStation = {
+      ...newStation,
+      coordinates: newStation.coordinates ? JSON.parse(newStation.coordinates) : null
+    };
+    
+    res.status(201).json(processedStation);
   } catch (error) {
     console.error('Erstellungsfehler:', error);
     res.status(500).json({ error: 'Station konnte nicht erstellt werden' });
@@ -87,7 +101,14 @@ app.put('/api/stationen/:id', async (req, res) => {
         coordinates: req.body.coordinates ? JSON.stringify(req.body.coordinates) : null
       }
     });
-    res.json(updated);
+    
+    // Koordinaten von JSON-String zu Array konvertieren
+    const processedStation = {
+      ...updated,
+      coordinates: updated.coordinates ? JSON.parse(updated.coordinates) : null
+    };
+    
+    res.json(processedStation);
   } catch (error) {
     console.error('Updatefehler:', error);
     res.status(500).json({ error: 'Station konnte nicht aktualisiert werden' });
@@ -100,8 +121,8 @@ app.delete('/api/stationen/:id', async (req, res) => {
     await prisma.policeStation.delete({ where: { id: req.params.id } });
     res.status(204).send();
   } catch (error) {
-    console.error('L\u00f6schfehler:', error);
-    res.status(500).json({ error: 'Station konnte nicht gel\u00f6scht werden' });
+    console.error('Löschfehler:', error);
+    res.status(500).json({ error: 'Station konnte nicht gelöscht werden' });
   }
 });
 

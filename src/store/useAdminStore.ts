@@ -40,7 +40,8 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
     set({ isLoading: true, error: null })
     try {
       const created = await apiCreateStation(station)
-      set({ stations: [...get().stations, created], isLoading: false })
+      const updatedStations = await fetchStations()
+      set({ stations: updatedStations, isLoading: false })
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error'
       set({ error: message, isLoading: false })
@@ -51,10 +52,8 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
     set({ isLoading: true, error: null })
     try {
       const updated = await apiUpdateStation(id, updates)
-      set({
-        stations: get().stations.map((s) => (s.id === id ? updated : s)),
-        isLoading: false,
-      })
+      const updatedStations = await fetchStations()
+      set({ stations: updatedStations, isLoading: false })
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error'
       set({ error: message, isLoading: false })
@@ -65,10 +64,8 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
     set({ isLoading: true, error: null })
     try {
       await apiDeleteStation(id)
-      set({
-        stations: get().stations.filter((s) => s.id !== id),
-        isLoading: false,
-      })
+      const updatedStations = await fetchStations()
+      set({ stations: updatedStations, isLoading: false })
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error'
       set({ error: message, isLoading: false })

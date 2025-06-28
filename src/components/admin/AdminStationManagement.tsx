@@ -411,6 +411,15 @@ const AdminStationManagement: React.FC = () => {
     loadStations()
   }, [loadStations])
 
+  // Lade Stationen auch nach Änderungen neu
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadStations()
+    }, 10000) // Alle 10 Sekunden neu laden
+    
+    return () => clearInterval(interval)
+  }, [loadStations])
+
   useEffect(() => {
     setExpandedPresidia(new Set(stations.filter(s => s.type === 'praesidium').map(s => s.id)))
   }, [stations])

@@ -280,10 +280,6 @@ const AdminAddressManagement: React.FC = () => {
   const [editingAddress, setEditingAddress] = useState<Address | null>(null)
   const { stations } = useAdminStore()
 
-  useEffect(() => {
-    loadAddresses()
-  }, [])
-
   const loadAddresses = async () => {
     try {
       setIsLoading(true)
@@ -296,6 +292,19 @@ const AdminAddressManagement: React.FC = () => {
       setIsLoading(false)
     }
   }
+
+  useEffect(() => {
+    loadAddresses()
+  }, [loadAddresses])
+
+  // Lade Adressen auch nach Änderungen neu
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadAddresses()
+    }, 10000) // Alle 10 Sekunden neu laden
+    
+    return () => clearInterval(interval)
+  }, [loadAddresses])
 
   const handleSave = async (formData: CreateAddressData | UpdateAddressData) => {
     try {

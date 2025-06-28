@@ -19,7 +19,6 @@ export const useStationStore = create<StationStore>((set, get) => ({
   error: null,
 
   loadStations: async () => {
-    if (get().stations.length > 0 || get().isLoading) return
     console.log('🔄 useStationStore: Lade Stationen...');
     set({ isLoading: true, error: null })
     try {

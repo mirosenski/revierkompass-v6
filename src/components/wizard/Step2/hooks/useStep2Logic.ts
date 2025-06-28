@@ -29,9 +29,21 @@ export const useStep2Logic = () => {
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Store-Hooks
-  const { stations, getStationsByType, getReviereByPraesidium } = useStationStore();
+  const { stations, getStationsByType, getReviereByPraesidium, loadStations } = useStationStore();
   const { selectedStations, setSelectedStations, selectedCustomAddresses, setSelectedCustomAddresses, setStep } = useWizardStore();
   const { customAddresses, addCustomAddress, deleteCustomAddress, setWizardStep } = useAppStore();
+
+  // Lade Stationen beim Mounten und alle 30 Sekunden neu
+  useEffect(() => {
+    loadStations();
+    
+    // Polling für Updates alle 30 Sekunden
+    const interval = setInterval(() => {
+      loadStations();
+    }, 30000);
+    
+    return () => clearInterval(interval);
+  }, [loadStations]);
 
   // Synchronisiere Custom-Adressen zwischen Stores
   useEffect(() => {
