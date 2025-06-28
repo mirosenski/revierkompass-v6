@@ -12,6 +12,9 @@ import { createAllAalenAddresses } from '@/data/aalen-addresses'
 import { createAllFreiburgAddresses } from '@/data/freiburg-addresses'
 import { createAllHeilbronnAddresses } from '@/data/heilbronn-addresses'
 import { createAllKarlsruheAddresses } from '@/data/karlsruhe-addresses'
+import { createAllKonstanzAddresses } from '@/data/konstanz-addresses'
+import { createAllLudwigsburgAddresses } from '@/data/ludwigsburg-addresses'
+import { createAllMannheimAddresses } from '@/data/mannheim-addresses'
 
 // ===== MAIN COMPONENT =====
 const AdminStationManagement: React.FC = () => {
@@ -44,6 +47,9 @@ const AdminStationManagement: React.FC = () => {
   const [isFreiburgImporting, setIsFreiburgImporting] = useState(false);
   const [isHeilbronnImporting, setIsHeilbronnImporting] = useState(false);
   const [isKarlsruheImporting, setIsKarlsruheImporting] = useState(false);
+  const [isKonstanzImporting, setIsKonstanzImporting] = useState(false);
+  const [isLudwigsburgImporting, setIsLudwigsburgImporting] = useState(false);
+  const [isMannheimImporting, setIsMannheimImporting] = useState(false);
 
   // Navigation tabs
   const navigationTabs = [
@@ -218,6 +224,48 @@ const AdminStationManagement: React.FC = () => {
     }
   }, [loadStations]);
 
+  const handleKonstanzImport = useCallback(async () => {
+    setIsKonstanzImporting(true);
+    try {
+      const createdCount = await createAllKonstanzAddresses();
+      if (createdCount > 0) {
+        await loadStations();
+      }
+    } catch (error) {
+      console.error('Fehler beim Konstanz-Import:', error);
+    } finally {
+      setIsKonstanzImporting(false);
+    }
+  }, [loadStations]);
+
+  const handleLudwigsburgImport = useCallback(async () => {
+    setIsLudwigsburgImporting(true);
+    try {
+      const createdCount = await createAllLudwigsburgAddresses();
+      if (createdCount > 0) {
+        await loadStations();
+      }
+    } catch (error) {
+      console.error('Fehler beim Ludwigsburg-Import:', error);
+    } finally {
+      setIsLudwigsburgImporting(false);
+    }
+  }, [loadStations]);
+
+  const handleMannheimImport = useCallback(async () => {
+    setIsMannheimImporting(true);
+    try {
+      const createdCount = await createAllMannheimAddresses();
+      if (createdCount > 0) {
+        await loadStations();
+      }
+    } catch (error) {
+      console.error('Fehler beim Mannheim-Import:', error);
+    } finally {
+      setIsMannheimImporting(false);
+    }
+  }, [loadStations]);
+
   // Loading State
   if (isLoading && stations.length === 0) {
     return (
@@ -311,12 +359,12 @@ const AdminStationManagement: React.FC = () => {
                 <span className="font-medium">Neue Station</span>
               </button>
               <button
-                onClick={handleKarlsruheImport}
-                disabled={isKarlsruheImporting}
+                onClick={handleMannheimImport}
+                disabled={isMannheimImporting}
                 className="flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white rounded-xl transition-all duration-200 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
               >
                 <Database className="w-5 h-5" />
-                <span className="font-medium">Karlsruhe Import</span>
+                <span className="font-medium">Mannheim Import</span>
               </button>
             </div>
           </div>
