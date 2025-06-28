@@ -403,12 +403,36 @@ const AdminStationManagement: React.FC = () => {
     filteredStations.filter(s => s.type === 'revier' && s.parentId === praesidiumId)
 
   const handleSave = async (formData: Partial<Station>) => {
+    const {
+      name,
+      type,
+      city,
+      address,
+      coordinates,
+      telefon,
+      email,
+      notdienst24h,
+      isActive,
+    } = formData
+
+    const newStationData = {
+      name,
+      type,
+      city,
+      address,
+      coordinates,
+      telefon,
+      email,
+      notdienst24h,
+      isActive,
+    }
+
     try {
       if (editingStation) {
-        await updateStation(editingStation.id, formData)
+        await updateStation(editingStation.id, newStationData)
         toast.success('Station erfolgreich aktualisiert')
       } else {
-        await createStation(formData as Station)
+        await createStation(newStationData as Station)
         toast.success('Station erfolgreich erstellt')
       }
       setEditingStation(null)
