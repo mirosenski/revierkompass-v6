@@ -114,7 +114,18 @@ const StationCard: React.FC<StationCardProps> = ({ station, onEdit, onDelete, is
 }
 
 // Modern Modal Component
-const StationModal = ({ station, isOpen, onClose, onSave, isLoading, error, showInactive, searchTerm, cityFilter }) => {
+const StationModal = ({
+  station,
+  isOpen,
+  onClose,
+  onSave,
+  isLoading,
+  error,
+  showInactive,
+  searchTerm,
+  cityFilter,
+  allCities,
+}) => {
   const { stations } = useAdminStore();
   const [formData, setFormData] = useState({
     name: '',
@@ -424,6 +435,7 @@ const StationModal = ({ station, isOpen, onClose, onSave, isLoading, error, show
         showInactive={showInactive}
         searchTerm={searchTerm}
         cityFilter={cityFilter}
+        allCities={allCities}
       />
     </div>
   )
@@ -725,6 +737,7 @@ const AdminStationManagement: React.FC = () => {
         showInactive={showInactive}
         searchTerm={searchTerm}
         cityFilter={cityFilter}
+        allCities={allCities}
       />
     </div>
   )
