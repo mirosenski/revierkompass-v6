@@ -266,15 +266,6 @@ const AdminAddressManagement: React.FC = () => {
                 <Plus className="w-5 h-5" />
                 <span className="font-medium">Neue Adresse</span>
               </button>
-
-              <button
-                onClick={handleCreateAllAalenAddresses}
-                disabled={isLoading}
-                className="flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white rounded-xl transition-all duration-200 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-              >
-                <Database className="w-5 h-5" />
-                <span className="font-medium">Aalen Import</span>
-              </button>
             </div>
           </div>
         </div>

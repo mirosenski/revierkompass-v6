@@ -42,23 +42,23 @@ const AddressCard: React.FC<AddressCardProps> = ({
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200">
-      <div className="p-6">
-        <div className="flex items-start justify-between mb-4">
+    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all duration-200 flex flex-col h-full">
+      <div className="p-6 flex flex-col gap-4 flex-1">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2">
           <div className="flex items-start gap-3">
-            <div className="bg-indigo-100 dark:bg-indigo-900/20 rounded-lg p-2">
-              <MapPin className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+            <div className="bg-indigo-100 dark:bg-indigo-900/20 rounded-lg p-2 flex items-center justify-center">
+              <MapPin className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1 break-words">
                 {address.name}
               </h3>
-              <p className="text-gray-600 dark:text-gray-400 text-sm">
+              <p className="text-gray-600 dark:text-gray-400 text-sm break-words">
                 {address.street}, {address.zipCode} {address.city}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             {getStatusBadge(address.reviewStatus)}
             {!address.isActive && (
               <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-full">
@@ -68,28 +68,27 @@ const AddressCard: React.FC<AddressCardProps> = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
           <div>
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0.5 uppercase tracking-wide">
               Koordinaten
             </p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-gray-700 dark:text-gray-300">
               {address.coordinates[0]?.toFixed(4)}, {address.coordinates[1]?.toFixed(4)}
             </p>
           </div>
-          
           <div>
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0.5 uppercase tracking-wide">
               Präsidium
             </p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-gray-700 dark:text-gray-300">
               {getPraesidiumName(address.parentId)}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
-          <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-4 border-t border-gray-200 dark:border-gray-700 mt-auto">
+          <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 flex-wrap">
             {address.isVerified && (
               <span className="flex items-center gap-1">
                 <Check className="w-4 h-4 text-green-500" />
@@ -102,7 +101,7 @@ const AddressCard: React.FC<AddressCardProps> = ({
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             {onApprove && address.reviewStatus === 'pending' && (
               <button
                 onClick={() => onApprove(address.id)}
@@ -112,7 +111,6 @@ const AddressCard: React.FC<AddressCardProps> = ({
                 <Check className="w-4 h-4" />
               </button>
             )}
-            
             {onReject && address.reviewStatus === 'pending' && (
               <button
                 onClick={() => onReject(address.id)}
@@ -122,7 +120,6 @@ const AddressCard: React.FC<AddressCardProps> = ({
                 <X className="w-4 h-4" />
               </button>
             )}
-
             <button
               onClick={() => onEdit(address)}
               className="p-2 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
@@ -130,7 +127,6 @@ const AddressCard: React.FC<AddressCardProps> = ({
             >
               <Edit2 className="w-4 h-4" />
             </button>
-
             <button
               onClick={() => onDelete(address.id)}
               className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"

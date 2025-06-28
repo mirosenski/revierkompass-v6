@@ -420,28 +420,6 @@ const AdminStationManagement: React.FC = () => {
       {/* Sticky Header */}
       <div className="sticky top-0 z-40 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md shadow-sm border-b border-gray-200/50 dark:border-gray-700/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          {/* Navigation Tabs */}
-          <div className="flex space-x-8 mb-6">
-            {navigationTabs.map((tab) => {
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  className={`flex items-center space-x-3 py-3 px-4 font-medium transition-all duration-200 border-b-2 ${
-                    tab.active
-                      ? 'text-indigo-600 dark:text-indigo-400 border-indigo-600 dark:border-indigo-400'
-                      : 'text-gray-500 dark:text-gray-400 border-transparent hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
-                  }`}
-                >
-                  <Icon className="h-5 w-5" />
-                  <div className="text-left">
-                    <div className="font-semibold">{tab.label}</div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
