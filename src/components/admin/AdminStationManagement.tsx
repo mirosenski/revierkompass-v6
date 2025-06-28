@@ -928,6 +928,207 @@ const AdminStationManagement: React.FC = () => {
     }
   }, [deleteStation, loadStations, filters.showInactive]);
 
+  // Funktion zum automatischen Erstellen aller Präsidien
+  const handleCreateAllPraesidien = useCallback(async () => {
+    const praesidienData = [
+      {
+        name: 'Polizeipräsidium Aalen',
+        address: 'Böhmerwaldstraße 20',
+        city: 'Aalen',
+        telefon: '07361 580-0',
+        email: '',
+        coordinates: [48.830248, 10.091980] as [number, number],
+        type: 'praesidium' as const,
+        notdienst24h: true,
+        isActive: true,
+        parentId: ''
+      },
+      {
+        name: 'Polizeipräsidium Einsatz',
+        address: 'Heininger Straße 100',
+        city: 'Göppingen',
+        telefon: '07161 616-0',
+        email: '',
+        coordinates: [48.6895433, 9.6719037] as [number, number],
+        type: 'praesidium' as const,
+        notdienst24h: true,
+        isActive: true,
+        parentId: ''
+      },
+      {
+        name: 'Polizeipräsidium Freiburg',
+        address: 'Bissierstraße 1',
+        city: 'Freiburg im Breisgau',
+        telefon: '0761 882-0',
+        email: '',
+        coordinates: [48.00235, 7.82138] as [number, number],
+        type: 'praesidium' as const,
+        notdienst24h: true,
+        isActive: true,
+        parentId: ''
+      },
+      {
+        name: 'Polizeipräsidium Heilbronn',
+        address: 'Karlstraße 108-112',
+        city: 'Heilbronn',
+        telefon: '07131-104-0',
+        email: '',
+        coordinates: [49.14155, 9.23619] as [number, number],
+        type: 'praesidium' as const,
+        notdienst24h: true,
+        isActive: true,
+        parentId: ''
+      },
+      {
+        name: 'Polizeipräsidium Karlsruhe',
+        address: 'Durlacher Allee 31-33',
+        city: 'Karlsruhe',
+        telefon: '0721 666-0',
+        email: '',
+        coordinates: [49.0075455, 8.4258926] as [number, number],
+        type: 'praesidium' as const,
+        notdienst24h: true,
+        isActive: true,
+        parentId: ''
+      },
+      {
+        name: 'Polizeipräsidium Konstanz',
+        address: 'Benediktinerplatz 3',
+        city: 'Konstanz',
+        telefon: '07531 995-0',
+        email: '',
+        coordinates: [47.66898, 9.1797] as [number, number],
+        type: 'praesidium' as const,
+        notdienst24h: true,
+        isActive: true,
+        parentId: ''
+      },
+      {
+        name: 'Polizeipräsidium Ludwigsburg',
+        address: 'Friedrich-Ebert-Straße 30',
+        city: 'Ludwigsburg',
+        telefon: '07141 18-9',
+        email: '',
+        coordinates: [48.8933215, 9.199877] as [number, number],
+        type: 'praesidium' as const,
+        notdienst24h: true,
+        isActive: true,
+        parentId: ''
+      },
+      {
+        name: 'Polizeipräsidium Mannheim',
+        address: 'L6 1',
+        city: 'Mannheim',
+        telefon: '0621 174-0',
+        email: '',
+        coordinates: [49.483230, 8.467120] as [number, number],
+        type: 'praesidium' as const,
+        notdienst24h: true,
+        isActive: true,
+        parentId: ''
+      },
+      {
+        name: 'Polizeipräsidium Offenburg',
+        address: 'Prinz-Eugen-Straße 78',
+        city: 'Offenburg',
+        telefon: '0781 21-0',
+        email: '',
+        coordinates: [48.47991, 7.95363] as [number, number],
+        type: 'praesidium' as const,
+        notdienst24h: true,
+        isActive: true,
+        parentId: ''
+      },
+      {
+        name: 'Polizeipräsidium Reutlingen',
+        address: 'Bismarckstraße 60',
+        city: 'Reutlingen',
+        telefon: '07121 942-0',
+        email: '',
+        coordinates: [48.492355, 9.220761] as [number, number],
+        type: 'praesidium' as const,
+        notdienst24h: true,
+        isActive: true,
+        parentId: ''
+      },
+      {
+        name: 'Polizeipräsidium Stuttgart',
+        address: 'Hahnemannstraße 1',
+        city: 'Stuttgart',
+        telefon: '0711 8990-0',
+        email: '',
+        coordinates: [48.81046, 9.18686] as [number, number],
+        type: 'praesidium' as const,
+        notdienst24h: true,
+        isActive: true,
+        parentId: ''
+      },
+      {
+        name: 'Polizeipräsidium Ulm',
+        address: 'Münsterplatz 47',
+        city: 'Ulm',
+        telefon: '0731 188-0',
+        email: '',
+        coordinates: [48.397614, 9.9916439] as [number, number],
+        type: 'praesidium' as const,
+        notdienst24h: true,
+        isActive: true,
+        parentId: ''
+      },
+      {
+        name: 'Polizeipräsidium Pforzheim',
+        address: 'Bahnhofstr. 13',
+        city: 'Pforzheim',
+        telefon: '+49 (0) 7231 / 186-0',
+        email: '',
+        coordinates: [48.893076, 8.7007708] as [number, number],
+        type: 'praesidium' as const,
+        notdienst24h: true,
+        isActive: true,
+        parentId: ''
+      },
+      {
+        name: 'Polizeipräsidium Ravensburg',
+        address: 'Gartenstraße 97',
+        city: 'Ravensburg',
+        telefon: '+49 (0) 751 / 803-0',
+        email: '',
+        coordinates: [47.7928276, 9.622915] as [number, number],
+        type: 'praesidium' as const,
+        notdienst24h: true,
+        isActive: true,
+        parentId: ''
+      }
+    ];
+
+    try {
+      console.log('🚀 Erstelle alle Präsidien automatisch...');
+      
+      for (let i = 0; i < praesidienData.length; i++) {
+        const praesidium = praesidienData[i];
+        console.log(`📝 Erstelle ${i + 1}/${praesidienData.length}: ${praesidium.name}`);
+        
+        await createStation(praesidium as Station);
+        
+        // Kurze Pause zwischen den Erstellungen
+        await new Promise(resolve => setTimeout(resolve, 200));
+      }
+      
+      // Stationen neu laden
+      await loadStations({ 
+        all: filters.showInactive, 
+        take: 1000
+      });
+      
+      toast.success(`${praesidienData.length} Präsidien erfolgreich erstellt!`);
+      console.log('✅ Alle Präsidien erfolgreich erstellt');
+      
+    } catch (err) {
+      console.error('❌ Fehler beim Erstellen der Präsidien:', err);
+      toast.error('Fehler beim Erstellen der Präsidien');
+    }
+  }, [createStation, loadStations, filters.showInactive]);
+
   const togglePraesidiumExpansion = useCallback((praesidiumId: string) => {
     setExpandedPresidia(prev => {
       const newSet = new Set(prev);
@@ -1054,6 +1255,15 @@ const AdminStationManagement: React.FC = () => {
                   />
                   <span>Inaktive anzeigen</span>
                 </label>
+                
+                <button
+                  onClick={handleCreateAllPraesidien}
+                  className="flex items-center gap-2 px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl transition-all duration-200 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                  title="Alle Präsidien automatisch erstellen"
+                >
+                  <Building2 className="w-4 h-4" />
+                  <span className="font-medium">Alle Präsidien</span>
+                </button>
                 
                 <button
                   onClick={handleCreateStation}
