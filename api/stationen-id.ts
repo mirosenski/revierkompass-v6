@@ -1,6 +1,8 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import prisma from '../api/lib/prisma';
-import { handleError } from '../api/lib/error-handler';
+import { PrismaClient } from '@prisma/client';
+
+// Prisma Client initialisieren
+const prisma = new PrismaClient();
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // CORS Headers
@@ -24,7 +26,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(405).json({ error: 'Method not allowed' });
     }
   } catch (error) {
-    return handleError(error, res);
+    console.error('API Error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  } finally {
+    await prisma.$disconnect();
   }
 }
 

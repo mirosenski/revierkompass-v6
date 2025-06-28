@@ -1,6 +1,9 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import prisma from '../api/lib/prisma';
+import { PrismaClient } from '@prisma/client';
 import { handleError } from '../api/lib/error-handler';
+
+// Prisma Client initialisieren
+const prisma = new PrismaClient();
 
 // Temporäre statische Daten für Polizeistationen
 const staticStations = [
@@ -66,7 +69,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(405).json({ error: 'Method not allowed' });
     }
   } catch (error) {
-    return handleError(error, res);
+    console.error('API Error:', error);
+    return res.status(500).json({ error: 'Internal server error' });
+  } finally {
+    await prisma.$disconnect();
   }
 }
 
