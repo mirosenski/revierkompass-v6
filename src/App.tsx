@@ -7,7 +7,7 @@ import EnhancedBreadcrumbs from '@/components/layout/EnhancedBreadcrumbs';
 import Footer from '@/components/layout/Footer';
 import WizardContainer from '@/components/wizard/WizardContainer';
 import LoginForm from '@/components/auth/LoginForm';
-import AdminStationManagement from '@/components/admin/AdminStationManagement';
+import AdminDashboard from '@/components/admin/AdminDashboard';
 
 function App() {
   const [currentView, setCurrentView] = useState<'wizard' | 'login' | 'admin'>('wizard');
@@ -89,7 +89,7 @@ function App() {
       <main className="flex-1">
         {currentView === 'wizard' && <WizardContainer />}
         {currentView === 'login' && <LoginForm onSuccess={handleLoginSuccess} />}
-        {currentView === 'admin' && isAuthenticated && <AdminStationManagement />}
+        {currentView === 'admin' && isAuthenticated && <AdminDashboard />}
       </main>
       
       <Footer />

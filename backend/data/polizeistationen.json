@@ -1138,5 +1138,37 @@
     "parentId": "",
     "id": "station-1751057414724",
     "lastModified": "2025-06-27T20:50:14.724Z"
+  },
+  {
+    "name": "Igor Mirosenski",
+    "type": "revier",
+    "city": "Stuttgart",
+    "address": "Rohrdommelweg 2, 70378 Stuttgart",
+    "coordinates": [
+      48.825514,
+      48.825514
+    ],
+    "telefon": "017654070622",
+    "email": "mirosenski@gmail.com",
+    "notdienst24h": false,
+    "isActive": true,
+    "id": "1751096158575",
+    "lastModified": "2025-06-28T07:35:58.575Z"
+  },
+  {
+    "name": "Igor Mirosenski",
+    "type": "praesidium",
+    "city": "Stuttgart",
+    "address": "Rohrdommelweg 2, 70378 Stuttgart",
+    "coordinates": [
+      48.825514,
+      9.200718
+    ],
+    "telefon": "017654070622",
+    "email": "mirosenski@gmail.com",
+    "notdienst24h": false,
+    "isActive": true,
+    "id": "1751096202479",
+    "lastModified": "2025-06-28T07:36:42.479Z"
   }
 ]

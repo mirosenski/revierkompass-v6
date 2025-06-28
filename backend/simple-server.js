@@ -11,10 +11,17 @@ app.set('trust proxy', 1);
 
 // CORS konfigurieren - dynamisch alle localhost Ports erlauben (für Entwicklung)
 const corsOptions = {
-  origin: 'http://localhost:5175',
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  origin: function (origin, callback) {
+    // Erlaube alle localhost Ports für Entwicklung
+    if (!origin || origin.startsWith('http://localhost:')) {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS nicht erlaubt'));
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
 };
 
 app.use(cors(corsOptions));
