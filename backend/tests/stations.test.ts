@@ -13,13 +13,13 @@ jest.mock('../src/lib/prisma', () => ({
 describe('Station routes', () => {
   const { prisma } = require('../src/lib/prisma');
 
-  test('GET /api/stations returns stations array', async () => {
+  test('GET /api/stationen returns stations array', async () => {
     (prisma.policeStation.findMany as jest.Mock).mockResolvedValue([
       { id: '1', name: 'Station 1' },
     ]);
     (prisma.policeStation.count as jest.Mock).mockResolvedValue(1);
 
-    const res = await request(app).get('/api/stations');
+    const res = await request(app).get('/api/stationen');
 
     expect(res.status).toBe(200);
     expect(Array.isArray(res.body.stations)).toBe(true);
