@@ -2,7 +2,6 @@ import { Router, Request, Response } from 'express';
 import { authenticateToken } from '../middleware/auth';
 import { createLimiter } from '../middleware/rateLimiter';
 import { offlineMapService } from '../services/OfflineMapService';
-import { logAction } from '../middleware/validation';
 
 const router = Router();
 
@@ -202,7 +201,6 @@ router.get('/nban', standardLimiter, async (req: Request, res: Response) => {
 router.post('/offline-package', 
   authenticateToken, 
   createLimiter(5, 60), // Very limited: 5 requests per hour
-  logAction('generate', 'offline_package'),
   async (req: Request, res: Response) => {
     try {
       const { bounds, minZoom = 8, maxZoom = 16 } = req.body;

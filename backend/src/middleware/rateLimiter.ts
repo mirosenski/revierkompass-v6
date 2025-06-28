@@ -10,6 +10,12 @@ export const apiLimiter = rateLimit({
   },
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  keyGenerator: (req) => {
+    // Sicherer Fallback
+    return req.ip || req.socket?.remoteAddress || 'unknown';
+  },
+  // Skip wenn keine gültige Request
+  skip: (req) => !req || !req.ip
 });
 
 // Strict limiter for auth endpoints
@@ -23,18 +29,25 @@ export const authLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  // Skip successful requests
+  keyGenerator: (req) => {
+    return req.ip || req.socket?.remoteAddress || 'unknown';
+  },
   skipSuccessfulRequests: true,
+  skip: (req) => !req || !req.ip
 });
 
 // Moderate limiter for data creation
-export const createLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 50, // 50 create requests per window
+export const createLimiter = (max: number, windowMs: number) => rateLimit({
+  windowMs: windowMs * 60 * 1000, // Convert minutes to milliseconds
+  max: max,
   message: {
-    error: 'Zu viele Erstellungsanfragen',
-    resetTime: '15 Minuten'
+    error: 'Zu viele Anfragen',
+    resetTime: `${windowMs} Minuten`
   },
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: (req) => {
+    return req.ip || req.socket?.remoteAddress || 'unknown';
+  },
+  skip: (req) => !req || !req.ip
 });

@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
+import path from 'path';
 import { prisma } from './lib/prisma';
 import { cleanupExpiredTokens } from './lib/jwt';
 import { apiLimiter } from './middleware/rateLimiter';
@@ -18,6 +19,9 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// Trust proxy for IP detection
+app.set('trust proxy', 1);
 
 // Security middleware
 app.use(helmet({
@@ -44,6 +48,15 @@ app.use(cors({
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Static files mit korrektem Content-Type für JSON
+app.use('/data', express.static(path.join(__dirname, '../data'), {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.json')) {
+      res.setHeader('Content-Type', 'application/json');
+    }
+  }
+}));
 
 // Rate limiting
 app.use('/api', apiLimiter);
