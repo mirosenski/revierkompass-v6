@@ -17,6 +17,10 @@ import { createAllLudwigsburgAddresses } from '@/data/ludwigsburg-addresses'
 import { createAllMannheimAddresses } from '@/data/mannheim-addresses'
 import { createAllOffenburgAddresses } from '@/data/offenburg-addresses'
 import { createAllPforzheimAddresses } from '@/data/pforzheim-addresses'
+import { createAllRavensburgAddresses } from '@/data/ravensburg-addresses'
+import { createAllReutlingenAddresses } from '@/data/reutlingen-addresses'
+import { createAllStuttgartAddresses } from '@/data/stuttgart-addresses'
+import { createAllUlmAddresses } from '@/data/ulm-addresses'
 
 // ===== MAIN COMPONENT =====
 const AdminStationManagement: React.FC = () => {
@@ -54,6 +58,10 @@ const AdminStationManagement: React.FC = () => {
   const [isMannheimImporting, setIsMannheimImporting] = useState(false);
   const [isOffenburgImporting, setIsOffenburgImporting] = useState(false);
   const [isPforzheimImporting, setIsPforzheimImporting] = useState(false);
+  const [isRavensburgImporting, setIsRavensburgImporting] = useState(false);
+  const [isReutlingenImporting, setIsReutlingenImporting] = useState(false);
+  const [isStuttgartImporting, setIsStuttgartImporting] = useState(false);
+  const [isUlmImporting, setIsUlmImporting] = useState(false);
 
   // Navigation tabs
   const navigationTabs = [
@@ -298,6 +306,62 @@ const AdminStationManagement: React.FC = () => {
     }
   }, [loadStations]);
 
+  const handleRavensburgImport = useCallback(async () => {
+    setIsRavensburgImporting(true);
+    try {
+      const createdCount = await createAllRavensburgAddresses();
+      if (createdCount > 0) {
+        await loadStations();
+      }
+    } catch (error) {
+      console.error('Fehler beim Ravensburg-Import:', error);
+    } finally {
+      setIsRavensburgImporting(false);
+    }
+  }, [loadStations]);
+
+  const handleReutlingenImport = useCallback(async () => {
+    setIsReutlingenImporting(true);
+    try {
+      const createdCount = await createAllReutlingenAddresses();
+      if (createdCount > 0) {
+        await loadStations();
+      }
+    } catch (error) {
+      console.error('Fehler beim Reutlingen-Import:', error);
+    } finally {
+      setIsReutlingenImporting(false);
+    }
+  }, [loadStations]);
+
+  const handleStuttgartImport = useCallback(async () => {
+    setIsStuttgartImporting(true);
+    try {
+      const createdCount = await createAllStuttgartAddresses();
+      if (createdCount > 0) {
+        await loadStations();
+      }
+    } catch (error) {
+      console.error('Fehler beim Stuttgart-Import:', error);
+    } finally {
+      setIsStuttgartImporting(false);
+    }
+  }, [loadStations]);
+
+  const handleUlmImport = useCallback(async () => {
+    setIsUlmImporting(true);
+    try {
+      const createdCount = await createAllUlmAddresses();
+      if (createdCount > 0) {
+        await loadStations();
+      }
+    } catch (error) {
+      console.error('Fehler beim Ulm-Import:', error);
+    } finally {
+      setIsUlmImporting(false);
+    }
+  }, [loadStations]);
+
   // Loading State
   if (isLoading && stations.length === 0) {
     return (
@@ -391,12 +455,20 @@ const AdminStationManagement: React.FC = () => {
                 <span className="font-medium">Neue Station</span>
               </button>
               <button
-                onClick={handlePforzheimImport}
-                disabled={isPforzheimImporting}
-                className="flex items-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white rounded-xl transition-all duration-200 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+                onClick={handleStuttgartImport}
+                disabled={isStuttgartImporting}
+                className="flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white rounded-xl transition-all duration-200 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
               >
                 <Database className="w-5 h-5" />
-                <span className="font-medium">Pforzheim Import</span>
+                <span className="font-medium">Stuttgart Import</span>
+              </button>
+              <button
+                onClick={handleUlmImport}
+                disabled={isUlmImporting}
+                className="flex items-center gap-2 px-6 py-3 bg-yellow-600 hover:bg-yellow-700 disabled:bg-yellow-400 text-white rounded-xl transition-all duration-200 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
+              >
+                <Database className="w-5 h-5" />
+                <span className="font-medium">Ulm Import</span>
               </button>
             </div>
           </div>
