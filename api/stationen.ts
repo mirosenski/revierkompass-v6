@@ -1,6 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import prisma from '../lib/prisma';
-import { handleError } from '../lib/error-handler';
+import prisma from '../api/lib/prisma';
+import { handleError } from '../api/lib/error-handler';
 
 // Temporäre statische Daten für Polizeistationen
 const staticStations = [
