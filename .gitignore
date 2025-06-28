@@ -9,3 +9,4 @@ node_modules/
 # Optional: Build-Outputs (können regeneriert werden)
 dist/
 build/
+backend/prisma/dev.db*

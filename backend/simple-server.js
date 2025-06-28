@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -49,73 +51,57 @@ app.get('/health', (req, res) => {
 });
 
 // API Routes
-app.get('/api/stationen', (req, res) => {
+app.get('/api/stationen', async (req, res) => {
   try {
-    const stationsData = require('./data/polizeistationen.json');
-    res.json(stationsData);
+    const stations = await prisma.policeStation.findMany();
+    res.json(stations);
   } catch (error) {
-    console.error('Fehler beim Laden der Stationen:', error);
-    res.status(500).json({ error: 'Stationen konnten nicht geladen werden' });
+    console.error('Datenbankfehler:', error);
+    res.status(500).json({ error: 'Fehler beim Laden der Stationen' });
   }
 });
 
 // Neue Station erstellen
-app.post('/api/stationen', (req, res) => {
+app.post('/api/stationen', async (req, res) => {
   try {
-    const filePath = path.join(__dirname, 'data', 'polizeistationen.json');
-    const stations = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-    const newStation = {
-      ...req.body,
-      id: Date.now().toString(),
-      lastModified: new Date().toISOString()
-    };
-    stations.push(newStation);
-    fs.writeFileSync(filePath, JSON.stringify(stations, null, 2));
+    const newStation = await prisma.policeStation.create({
+      data: {
+        ...req.body,
+        coordinates: req.body.coordinates ? JSON.stringify(req.body.coordinates) : null
+      }
+    });
     res.status(201).json(newStation);
   } catch (error) {
-    console.error('Fehler beim Erstellen der Station:', error);
+    console.error('Erstellungsfehler:', error);
     res.status(500).json({ error: 'Station konnte nicht erstellt werden' });
   }
 });
 
 // Station aktualisieren
-app.put('/api/stationen/:id', (req, res) => {
+app.put('/api/stationen/:id', async (req, res) => {
   try {
-    const filePath = path.join(__dirname, 'data', 'polizeistationen.json');
-    const stations = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-    const index = stations.findIndex(st => st.id === req.params.id);
-    if (index === -1) {
-      return res.status(404).json({ error: 'Station nicht gefunden' });
-    }
-    stations[index] = {
-      ...stations[index],
-      ...req.body,
-      id: stations[index].id,
-      lastModified: new Date().toISOString()
-    };
-    fs.writeFileSync(filePath, JSON.stringify(stations, null, 2));
-    res.status(200).json(stations[index]);
+    const updated = await prisma.policeStation.update({
+      where: { id: req.params.id },
+      data: {
+        ...req.body,
+        coordinates: req.body.coordinates ? JSON.stringify(req.body.coordinates) : null
+      }
+    });
+    res.json(updated);
   } catch (error) {
-    console.error('Fehler beim Aktualisieren der Station:', error);
+    console.error('Updatefehler:', error);
     res.status(500).json({ error: 'Station konnte nicht aktualisiert werden' });
   }
 });
 
 // Station löschen
-app.delete('/api/stationen/:id', (req, res) => {
+app.delete('/api/stationen/:id', async (req, res) => {
   try {
-    const filePath = path.join(__dirname, 'data', 'polizeistationen.json');
-    const stations = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-    const index = stations.findIndex(st => st.id === req.params.id);
-    if (index === -1) {
-      return res.status(404).json({ error: 'Station nicht gefunden' });
-    }
-    stations.splice(index, 1);
-    fs.writeFileSync(filePath, JSON.stringify(stations, null, 2));
+    await prisma.policeStation.delete({ where: { id: req.params.id } });
     res.status(204).send();
   } catch (error) {
-    console.error('Fehler beim Löschen der Station:', error);
-    res.status(500).json({ error: 'Station konnte nicht gelöscht werden' });
+    console.error('L\u00f6schfehler:', error);
+    res.status(500).json({ error: 'Station konnte nicht gel\u00f6scht werden' });
   }
 });
 
@@ -139,7 +125,7 @@ app.use((error, req, res, next) => {
 
 // Server starten
 app.listen(PORT, () => {
-  console.log(`🚀 RevierKompass Simple Backend läuft auf Port ${PORT}`);
+  console.log(`🚀 SQLite-Backend läuft auf Port ${PORT}`);
   console.log(`📊 Health check: http://localhost:${PORT}/health`);
   console.log(`🏢 Stationen API: http://localhost:${PORT}/api/stationen`);
   console.log(`📁 Static files: http://localhost:${PORT}/data/`);
