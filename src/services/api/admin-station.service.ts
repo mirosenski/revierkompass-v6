@@ -1,9 +1,9 @@
 import { Station } from '@/types/station.types'
 import {
   fetchStations,
-  createStation,
-  updateStation,
-  deleteStation,
+  createStation as backendCreateStation,
+  updateStation as backendUpdateStation,
+  deleteStation as backendDeleteStation,
 } from './backend-api.service'
 import axios from 'axios'
 
@@ -52,13 +52,10 @@ export const adminStationService: AdminStationService = {
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
-      // Koordinaten als Objekt senden (wird im Backend zu String konvertiert)
+      // Koordinaten als Array senden
       const response = await axios.post(API_URL, {
         ...station,
-        coordinates: {
-          lat: station.coordinates.split(',')[0],
-          lng: station.coordinates.split(',')[1]
-        }
+        coordinates: station.coordinates
       }, { headers });
       console.log('✅ Station erfolgreich erstellt:', response.data);
       return response.data;
@@ -108,13 +105,20 @@ export const adminStationService: AdminStationService = {
     const stations = await fetchStations()
     const current = stations.find((s) => s.id === id)
     if (!current) throw new Error('Station not found')
-    return updateStation(id, { isActive: !current.isActive })
+    return this.updateStation(id, { isActive: !current.isActive })
   },
 
   async bulkUpdateStations(updates) {
     const promises = updates.map(({ id, changes }) =>
-      updateStation(id, changes)
+      this.updateStation(id, changes)
     )
     return Promise.all(promises)
   },
 }
+
+// Exportiere die Funktionen direkt
+export const createStation = adminStationService.createStation;
+export const updateStation = adminStationService.updateStation;
+export const deleteStation = adminStationService.deleteStation;
+export const toggleStationActive = adminStationService.toggleStationActive;
+export const bulkUpdateStations = adminStationService.bulkUpdateStations;

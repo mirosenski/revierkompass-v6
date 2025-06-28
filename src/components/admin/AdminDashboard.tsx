@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Building2, MapPin, Settings, BarChart3 } from 'lucide-react'
-import AdminStationManagement from './AdminStationManagement'
-import AdminAddressManagement from './AdminAddressManagement'
+import { AdminStationManagement } from './stations'
+import { AdminAddressManagement } from './addresses'
 
 const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('stations')

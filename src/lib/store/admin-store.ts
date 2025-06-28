@@ -1,6 +1,7 @@
 import { create } from 'zustand';
-import { Station } from './app-store';
+import { Station } from '@/types/station.types';
 import { fetchStations } from '@/services/api/backend-api.service';
+import { createStation, updateStation, deleteStation } from '@/services/api/admin-station.service';
 
 export interface AdminStats {
   totalStations: number;
@@ -31,7 +32,7 @@ export interface AdminState {
   // Filters & Sorting
   searchQuery: string;
   cityFilter: string;
-  typeFilter: 'all' | 'Präsidium' | 'Revier';
+  typeFilter: 'all' | 'praesidium' | 'revier';
   sortBy: 'name' | 'city' | 'type';
   sortOrder: 'asc' | 'desc';
   
@@ -55,7 +56,7 @@ export interface AdminState {
   // Actions - Filtering & Sorting
   setSearchQuery: (query: string) => void;
   setCityFilter: (city: string) => void;
-  setTypeFilter: (type: 'all' | 'Präsidium' | 'Revier') => void;
+  setTypeFilter: (type: 'all' | 'praesidium' | 'revier') => void;
   setSorting: (sortBy: 'name' | 'city' | 'type', order: 'asc' | 'desc') => void;
   getFilteredStations: () => Station[];
   
@@ -272,8 +273,8 @@ export const useAdminStore = create<AdminState>((set, get) => ({
       
       // Calculate real stats from current data
       stats.totalStations = currentStations.length;
-      stats.totalPrecincts = currentStations.filter(s => s.type === 'Präsidium').length;
-      stats.totalStationHouses = currentStations.filter(s => s.type === 'Revier').length;
+      stats.totalPrecincts = currentStations.filter(s => s.type === 'praesidium').length;
+      stats.totalStationHouses = currentStations.filter(s => s.type === 'revier').length;
       
       set({ stats, isLoading: false });
       
@@ -294,8 +295,8 @@ export const useAdminStore = create<AdminState>((set, get) => ({
       const updatedStats: AdminStats = {
         ...currentStats,
         totalStations: currentStations.length,
-        totalPrecincts: currentStations.filter(s => s.type === 'Präsidium').length,
-        totalStationHouses: currentStations.filter(s => s.type === 'Revier').length,
+        totalPrecincts: currentStations.filter(s => s.type === 'praesidium').length,
+        totalStationHouses: currentStations.filter(s => s.type === 'revier').length,
         lastUpdate: new Date()
       };
       
