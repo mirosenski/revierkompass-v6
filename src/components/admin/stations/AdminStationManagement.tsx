@@ -15,6 +15,8 @@ import { createAllKarlsruheAddresses } from '@/data/karlsruhe-addresses'
 import { createAllKonstanzAddresses } from '@/data/konstanz-addresses'
 import { createAllLudwigsburgAddresses } from '@/data/ludwigsburg-addresses'
 import { createAllMannheimAddresses } from '@/data/mannheim-addresses'
+import { createAllOffenburgAddresses } from '@/data/offenburg-addresses'
+import { createAllPforzheimAddresses } from '@/data/pforzheim-addresses'
 
 // ===== MAIN COMPONENT =====
 const AdminStationManagement: React.FC = () => {
@@ -50,6 +52,8 @@ const AdminStationManagement: React.FC = () => {
   const [isKonstanzImporting, setIsKonstanzImporting] = useState(false);
   const [isLudwigsburgImporting, setIsLudwigsburgImporting] = useState(false);
   const [isMannheimImporting, setIsMannheimImporting] = useState(false);
+  const [isOffenburgImporting, setIsOffenburgImporting] = useState(false);
+  const [isPforzheimImporting, setIsPforzheimImporting] = useState(false);
 
   // Navigation tabs
   const navigationTabs = [
@@ -266,6 +270,34 @@ const AdminStationManagement: React.FC = () => {
     }
   }, [loadStations]);
 
+  const handleOffenburgImport = useCallback(async () => {
+    setIsOffenburgImporting(true);
+    try {
+      const createdCount = await createAllOffenburgAddresses();
+      if (createdCount > 0) {
+        await loadStations();
+      }
+    } catch (error) {
+      console.error('Fehler beim Offenburg-Import:', error);
+    } finally {
+      setIsOffenburgImporting(false);
+    }
+  }, [loadStations]);
+
+  const handlePforzheimImport = useCallback(async () => {
+    setIsPforzheimImporting(true);
+    try {
+      const createdCount = await createAllPforzheimAddresses();
+      if (createdCount > 0) {
+        await loadStations();
+      }
+    } catch (error) {
+      console.error('Fehler beim Pforzheim-Import:', error);
+    } finally {
+      setIsPforzheimImporting(false);
+    }
+  }, [loadStations]);
+
   // Loading State
   if (isLoading && stations.length === 0) {
     return (
@@ -359,12 +391,12 @@ const AdminStationManagement: React.FC = () => {
                 <span className="font-medium">Neue Station</span>
               </button>
               <button
-                onClick={handleMannheimImport}
-                disabled={isMannheimImporting}
-                className="flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white rounded-xl transition-all duration-200 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                onClick={handlePforzheimImport}
+                disabled={isPforzheimImporting}
+                className="flex items-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white rounded-xl transition-all duration-200 shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
               >
                 <Database className="w-5 h-5" />
-                <span className="font-medium">Mannheim Import</span>
+                <span className="font-medium">Pforzheim Import</span>
               </button>
             </div>
           </div>
