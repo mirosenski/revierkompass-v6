@@ -7,10 +7,16 @@ export default {
   darkMode: 'class', // Ermöglicht Dark Mode via class="dark"
   theme: {
     extend: {
-      // Moderne Farbpalette nach aktuellen Design-Trends
+      // CSS Variables für shadcn/ui
       colors: {
-        // Primärfarben mit modernen Abstufungen
+        border: "hsl(var(--border))",
+        input: "hsl(var(--input))",
+        ring: "hsl(var(--ring))",
+        background: "hsl(var(--background))",
+        foreground: "hsl(var(--foreground))",
         primary: {
+          DEFAULT: "hsl(var(--primary))",
+          foreground: "hsl(var(--primary-foreground))",
           50: '#eff6ff',
           100: '#dbeafe',
           200: '#bfdbfe',
@@ -22,6 +28,34 @@ export default {
           800: '#1e40af',
           900: '#1e3a8a',
           950: '#172554',
+        },
+        secondary: {
+          DEFAULT: "hsl(var(--secondary))",
+          foreground: "hsl(var(--secondary-foreground))",
+        },
+        destructive: {
+          DEFAULT: "hsl(var(--destructive))",
+          foreground: "hsl(var(--destructive-foreground))",
+        },
+        muted: {
+          DEFAULT: "hsl(var(--muted))",
+          foreground: "hsl(var(--muted-foreground))",
+        },
+        accent: {
+          DEFAULT: "hsl(var(--accent))",
+          foreground: "hsl(var(--accent-foreground))",
+          purple: '#8b5cf6',
+          pink: '#ec4899',
+          emerald: '#10b981',
+          amber: '#f59e0b',
+        },
+        popover: {
+          DEFAULT: "hsl(var(--popover))",
+          foreground: "hsl(var(--popover-foreground))",
+        },
+        card: {
+          DEFAULT: "hsl(var(--card))",
+          foreground: "hsl(var(--card-foreground))",
         },
         // Moderne Grautöne für Dark Mode
         gray: {
@@ -36,13 +70,6 @@ export default {
           800: '#1f2937',
           900: '#111827',
           950: '#030712',
-        },
-        // Akzentfarben für moderne UI
-        accent: {
-          purple: '#8b5cf6',
-          pink: '#ec4899',
-          emerald: '#10b981',
-          amber: '#f59e0b',
         },
       },
       // Moderne Schriftarten
