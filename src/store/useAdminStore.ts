@@ -12,7 +12,7 @@ interface AdminStore {
   isLoading: boolean
   error: string | null
 
-  loadStations: () => Promise<void>
+  loadStations: (params?: { all: boolean; take: number }) => Promise<void>
   createStation: (
     station: Omit<Station, 'id' | 'lastModified'>
   ) => Promise<void>
@@ -25,11 +25,11 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
   isLoading: false,
   error: null,
 
-  loadStations: async () => {
+  loadStations: async (params = { all: true, take: 1000 }) => {
     console.log('🔄 useAdminStore: Lade Stationen...');
     set({ isLoading: true, error: null })
     try {
-      const data = await fetchStations()
+      const data = await fetchStations(params)
       console.log('✅ useAdminStore: Stationen geladen:', data.length);
       console.log('🔍 Stationen Details:', data.map(s => ({ name: s.name, type: s.type, parentId: s.parentId })))
       set({ stations: data, isLoading: false })

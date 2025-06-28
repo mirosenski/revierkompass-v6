@@ -6,23 +6,25 @@ export interface Station {
   /** Name des Präsidiums oder Reviers */
   name: string
   /** Art der Station: Präsidium oder Revier */
-  type: StationType
-  /** Optional: ID des übergeordneten Präsidiums */
-  parentId?: string
+  type: 'präsidium' | 'revier'
   /** Stadt, in der die Station liegt */
   city: string
   /** Vollständige Straßenadresse */
   address: string
-  /** Koordinaten in der Form [Latitude, Longitude] */
-  coordinates: [number, number]
+  /** Koordinaten in der Form "lat,lng" */
+  coordinates: string
   /** Telefonnummer der Station */
   telefon: string
   /** E-Mail-Adresse der Station */
-  email: string
+  email?: string
   /** Rund-um-die-Uhr-Erreichbarkeit */
   notdienst24h: boolean
   /** Steuerung der Sichtbarkeit im Frontend oder Adminbereich */
   isActive: boolean
   /** Zeitpunkt der letzten Änderung (für Audit-Logs) */
   lastModified: string
+  /** Optional: ID des übergeordneten Präsidiums */
+  parentId?: string
+  /** Optional: Emergency-Flag */
+  isEmergency?: boolean
 }

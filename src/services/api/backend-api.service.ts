@@ -26,10 +26,11 @@ function getAuthToken(): string | null {
   return null;
 }
 
-export const fetchStations = async (): Promise<Station[]> => {
+export const fetchStations = async (params = {}): Promise<Station[]> => {
   try {
     console.log('🔄 Lade Stationen vom Backend-Server...');
     const response = await axios.get(API_URL, { 
+      params,
       timeout: 5000,
       headers: {
         'Accept': 'application/json',
@@ -38,7 +39,7 @@ export const fetchStations = async (): Promise<Station[]> => {
     });
     
     console.log('✅ Stationen erfolgreich geladen:', response.data.length, 'Stationen');
-    return response.data;
+    return response.data.stations || response.data;
   } catch (error) {
     // Kein Fallback mehr auf lokale Daten!
     console.error('❌ Backend nicht erreichbar, keine Stationen geladen!');

@@ -5,6 +5,29 @@ import {
   updateStation,
   deleteStation,
 } from './backend-api.service'
+import axios from 'axios'
+
+// API-URL definieren
+const API_URL = '/api/stationen';
+
+// Hilfsfunktion zum Token holen
+function getAuthToken(): string | null {
+  try {
+    // Token aus localStorage holen (Zustand-Store persistiert dort)
+    const authData = localStorage.getItem('revierkompass-v2-auth');
+    if (authData) {
+      const parsed = JSON.parse(authData);
+      if (parsed.token) {
+        console.log('🔑 Token gefunden:', parsed.token.substring(0, 20) + '...');
+        return parsed.token;
+      }
+    }
+  } catch (error) {
+    console.error('❌ Fehler beim Token abrufen:', error);
+  }
+  console.warn('⚠️ Kein Token im localStorage gefunden');
+  return null;
+}
 
 export interface AdminStationService {
   createStation: (
@@ -20,15 +43,64 @@ export interface AdminStationService {
 
 export const adminStationService: AdminStationService = {
   async createStation(station) {
-    return createStation(station)
+    const token = getAuthToken();
+    try {
+      console.log('🔄 Erstelle neue Station...');
+      const headers: any = {
+        'Content-Type': 'application/json'
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      // Koordinaten als Objekt senden (wird im Backend zu String konvertiert)
+      const response = await axios.post(API_URL, {
+        ...station,
+        coordinates: {
+          lat: station.coordinates.split(',')[0],
+          lng: station.coordinates.split(',')[1]
+        }
+      }, { headers });
+      console.log('✅ Station erfolgreich erstellt:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Fehler beim Erstellen der Station:', error);
+      throw error;
+    }
   },
 
   async updateStation(id, updates) {
-    return updateStation(id, updates)
+    const token = getAuthToken();
+    try {
+      console.log('🔄 Aktualisiere Station:', id);
+      const headers: any = {
+        'Content-Type': 'application/json'
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const response = await axios.put(`${API_URL}/${id}`, updates, { headers });
+      console.log('✅ Station erfolgreich aktualisiert:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Fehler beim Aktualisieren der Station:', error);
+      throw error;
+    }
   },
 
   async deleteStation(id) {
-    await deleteStation(id)
+    const token = getAuthToken();
+    try {
+      console.log('🔄 Lösche Station:', id);
+      const headers: any = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      await axios.delete(`${API_URL}/${id}`, { headers });
+      console.log('✅ Station erfolgreich gelöscht');
+    } catch (error) {
+      console.error('❌ Fehler beim Löschen der Station:', error);
+      throw error;
+    }
     return true
   },
 
