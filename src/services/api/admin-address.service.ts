@@ -18,6 +18,7 @@ export interface Address {
     id: string
     email: string
   }
+  parentId?: string
 }
 
 export interface CreateAddressData {
@@ -29,6 +30,7 @@ export interface CreateAddressData {
   isVerified?: boolean
   isActive?: boolean
   reviewStatus?: 'pending' | 'approved' | 'rejected'
+  parentId?: string
 }
 
 export interface UpdateAddressData extends Partial<CreateAddressData> {}
@@ -53,7 +55,8 @@ export const adminAddressService = {
         isActive: station.isActive,
         reviewStatus: station.reviewStatus || 'pending',
         createdAt: station.lastModified,
-        user: station.user
+        user: station.user,
+        parentId: station.parentId
       }))
     } catch (error) {
       console.error('Fehler beim Laden der Adressen:', error)
@@ -76,7 +79,8 @@ export const adminAddressService = {
         isActive: addressData.isActive !== false,
         isVerified: addressData.isVerified || false,
         reviewStatus: addressData.reviewStatus || 'pending',
-        zipCode: addressData.zipCode
+        zipCode: addressData.zipCode,
+        parentId: addressData.parentId || undefined
       }
       
       const response = await axios.post(API_URL, stationData, {
@@ -96,7 +100,8 @@ export const adminAddressService = {
         isActive: response.data.isActive,
         reviewStatus: response.data.reviewStatus || 'pending',
         createdAt: response.data.lastModified,
-        user: response.data.user
+        user: response.data.user,
+        parentId: response.data.parentId
       }
     } catch (error) {
       console.error('Fehler beim Erstellen der Adresse:', error)
@@ -116,6 +121,7 @@ export const adminAddressService = {
       if (addressData.isVerified !== undefined) stationData.isVerified = addressData.isVerified
       if (addressData.isActive !== undefined) stationData.isActive = addressData.isActive
       if (addressData.reviewStatus) stationData.reviewStatus = addressData.reviewStatus
+      if (addressData.parentId !== undefined) stationData.parentId = addressData.parentId
       
       const response = await axios.put(`${API_URL}/${id}`, stationData, {
         headers: {
@@ -134,7 +140,8 @@ export const adminAddressService = {
         isActive: response.data.isActive,
         reviewStatus: response.data.reviewStatus || 'pending',
         createdAt: response.data.lastModified,
-        user: response.data.user
+        user: response.data.user,
+        parentId: response.data.parentId
       }
     } catch (error) {
       console.error('Fehler beim Aktualisieren der Adresse:', error)
@@ -175,7 +182,8 @@ export const adminAddressService = {
         isActive: response.data.isActive,
         reviewStatus: response.data.reviewStatus || 'pending',
         createdAt: response.data.lastModified,
-        user: response.data.user
+        user: response.data.user,
+        parentId: response.data.parentId
       }
     } catch (error) {
       console.error('Fehler beim Genehmigen der Adresse:', error)
@@ -206,7 +214,8 @@ export const adminAddressService = {
         isActive: response.data.isActive,
         reviewStatus: response.data.reviewStatus || 'pending',
         createdAt: response.data.lastModified,
-        user: response.data.user
+        user: response.data.user,
+        parentId: response.data.parentId
       }
     } catch (error) {
       console.error('Fehler beim Ablehnen der Adresse:', error)

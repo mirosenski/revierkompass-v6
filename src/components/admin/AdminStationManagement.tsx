@@ -115,6 +115,7 @@ const StationCard: React.FC<StationCardProps> = ({ station, onEdit, onDelete, is
 
 // Modern Modal Component
 const StationModal = ({ station, isOpen, onClose, onSave }) => {
+  const { stations } = useAdminStore();
   const [formData, setFormData] = useState({
     name: '',
     address: '',
@@ -159,6 +160,9 @@ const StationModal = ({ station, isOpen, onClose, onSave }) => {
       })
     }
   }, [station, isOpen])
+
+  // Präsidien für Dropdown filtern
+  const availablePraesidien = stations.filter(s => s.type === 'praesidium' && s.isActive);
 
   if (!isOpen) return null
 
@@ -217,7 +221,7 @@ const StationModal = ({ station, isOpen, onClose, onSave }) => {
                 </label>
                 <select
                   value={formData.type}
-                  onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value as StationType }))}
+                  onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value as StationType, parentId: '' }))}
                   className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 >
                   <option value="praesidium">Präsidium</option>
@@ -337,6 +341,31 @@ const StationModal = ({ station, isOpen, onClose, onSave }) => {
                   <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Aktiv</span>
                 </label>
               </div>
+
+              {/* Präsidium-Auswahl nur für Revier */}
+              {formData.type === 'revier' && (
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    <Building2 className="inline w-4 h-4 mr-1" />
+                    Präsidium zuordnen
+                  </label>
+                  <select
+                    value={formData.parentId}
+                    onChange={(e) => setFormData(prev => ({ ...prev, parentId: e.target.value }))}
+                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  >
+                    <option value="">Bitte wählen…</option>
+                    {availablePraesidien.map((praesidium) => (
+                      <option key={praesidium.id} value={praesidium.id}>
+                        {praesidium.name} ({praesidium.city})
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Wählen Sie das übergeordnete Präsidium für dieses Revier.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -413,6 +442,7 @@ const AdminStationManagement: React.FC = () => {
       email,
       notdienst24h,
       isActive,
+      parentId,
     } = formData
 
     const newStationData = {
@@ -425,6 +455,7 @@ const AdminStationManagement: React.FC = () => {
       email,
       notdienst24h,
       isActive,
+      parentId,
     }
 
     try {

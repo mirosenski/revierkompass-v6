@@ -3,6 +3,7 @@ import { useStationStore } from '@/store/useStationStore';
 import { useWizardStore } from '@/store/useWizardStore';
 import { useAppStore, RouteResult } from '@/lib/store/app-store';
 import toast from 'react-hot-toast';
+import React from 'react';
 
 export const useStep2Logic = () => {
   // States
@@ -28,7 +29,7 @@ export const useStep2Logic = () => {
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Store-Hooks
-  const { stations, getStationsByType, getReviereByPraesidium, loadStations } = useStationStore();
+  const { stations, getStationsByType, getReviereByPraesidium } = useStationStore();
   const { selectedStations, setSelectedStations, selectedCustomAddresses, setSelectedCustomAddresses, setStep } = useWizardStore();
   const { customAddresses, addCustomAddress, deleteCustomAddress, setWizardStep } = useAppStore();
 
@@ -40,10 +41,32 @@ export const useStep2Logic = () => {
     }
   }, [customAddresses, selectedCustomAddresses]);
 
-  // Lade Stationen beim Mounten der Komponente
+  // Debug: Log wenn Stationen geladen sind
   useEffect(() => {
-    loadStations();
-  }, [loadStations]);
+    console.log('🔍 useStep2Logic: Stationen geladen:', stations.length);
+    const praesidien = getStationsByType('praesidium');
+    const reviere = getStationsByType('revier');
+    console.log('🔍 useStep2Logic: Präsidien:', praesidien.length, 'Reviere:', reviere.length);
+  }, [stations, getStationsByType]);
+
+  // Erstelle Präsidien mit Revieren
+  const praesidiumWithReviere = React.useMemo(() => {
+    const praesidien = getStationsByType('praesidium');
+    return praesidien.map(praesidium => ({
+      ...praesidium,
+      reviere: getReviereByPraesidium(praesidium.id),
+      selectedCount: getReviereByPraesidium(praesidium.id)
+        .filter(r => selectedStations.includes(r.id)).length
+    }));
+  }, [stations, selectedStations, getStationsByType, getReviereByPraesidium]);
+
+  // Debug: Log Präsidien mit Revieren
+  useEffect(() => {
+    console.log('🔍 useStep2Logic: Präsidien mit Revieren:', praesidiumWithReviere.length);
+    praesidiumWithReviere.forEach(p => {
+      console.log(`  - ${p.name}: ${p.reviere.length} Reviere`);
+    });
+  }, [praesidiumWithReviere]);
 
   // Manuelle Initialisierung der Custom-Adressen
   const initializeCustomAddresses = () => {
@@ -85,13 +108,6 @@ export const useStep2Logic = () => {
       // Hier könnten wir die Adressen manuell setzen, falls nötig
     }
   }, []);
-
-  // Debug: Log wenn Stationen geladen sind
-  useEffect(() => {
-    if (stations.length === 0) {
-      console.log('⚠️ Keine Stationen geladen!');
-    }
-  }, [stations]);
 
   // Debug: Log Custom-Adressen
   useEffect(() => {
@@ -499,6 +515,7 @@ export const useStep2Logic = () => {
     selectedStations,
     selectedCustomAddresses,
     customAddresses,
+    praesidiumWithReviere,
     
     // Functions
     togglePraesidiumWithReviere,

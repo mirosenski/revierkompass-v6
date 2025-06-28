@@ -40,16 +40,8 @@ export const fetchStations = async (): Promise<Station[]> => {
     console.log('✅ Stationen erfolgreich geladen:', response.data.length, 'Stationen');
     return response.data;
   } catch (error) {
-    console.warn('⚠️ Backend nicht erreichbar, verwende lokale Fallback-Daten');
-    console.warn('🔧 Backend-Status:', error.message);
-    
-    // Fallback zu lokalen Daten - localStationsData ist bereits ein Array, KEIN JSON.parse nötig!
-    if (localStationsData && Array.isArray(localStationsData)) {
-      console.log('✅ Lokale Daten geladen:', localStationsData.length, 'Stationen');
-      return localStationsData as Station[];
-    }
-    
-    console.error('❌ Auch lokale Daten nicht verfügbar');
+    // Kein Fallback mehr auf lokale Daten!
+    console.error('❌ Backend nicht erreichbar, keine Stationen geladen!');
     throw new Error('Stationen konnten nicht geladen werden');
   }
 }

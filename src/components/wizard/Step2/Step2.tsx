@@ -15,8 +15,21 @@ import Step2CommandDialog from './components/CommandDialog';
 import { Building as BuildingIcon, MapPin as MapPinIcon, Trash2, ArrowRight } from 'lucide-react';
 
 const Step2: React.FC = () => {
-  const { getStationsByType, getReviereByPraesidium } = useStationStore();
+  const { getStationsByType, getReviereByPraesidium, loadStations, stations } = useStationStore();
   const { setSelectedStations } = useWizardStore();
+  
+  // Lade Stationen beim Mounten der Komponente
+  useEffect(() => {
+    loadStations();
+  }, [loadStations]);
+
+  // Debug: Log wenn Stationen geladen sind
+  useEffect(() => {
+    console.log('🔍 Step2: Stationen geladen:', stations.length);
+    const praesidien = getStationsByType('praesidium');
+    const reviere = getStationsByType('revier');
+    console.log('🔍 Step2: Präsidien:', praesidien.length, 'Reviere:', reviere.length);
+  }, [stations, getStationsByType]);
   
   const {
     // States
@@ -38,10 +51,10 @@ const Step2: React.FC = () => {
     searchInputRef,
     
     // Store data
-    stations,
     selectedStations,
     selectedCustomAddresses,
     customAddresses,
+    praesidiumWithReviere,
     
     // Functions
     togglePraesidiumWithReviere,
@@ -206,23 +219,6 @@ const Step2: React.FC = () => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
-
-  // Präsidien mit Revieren und selectedCount
-  const praesidien = getStationsByType('praesidium');
-  const praesidiumWithReviere = praesidien.map(praesidium => ({
-    ...praesidium,
-    reviere: getReviereByPraesidium(praesidium.id),
-    isExpanded: expandedPraesidien.has(praesidium.id),
-    selectedCount: getReviereByPraesidium(praesidium.id)
-      .filter(r => selectedStations.includes(r.id)).length
-  }));
-
-  // Debug: Log wenn Stationen geladen sind
-  useEffect(() => {
-    if (stations.length === 0) {
-      console.log('⚠️ Keine Stationen geladen!');
-    }
-  }, [stations, praesidien, praesidiumWithReviere, selectedStations, selectedCustomAddresses, customAddresses]);
 
   const tabs = [
     {

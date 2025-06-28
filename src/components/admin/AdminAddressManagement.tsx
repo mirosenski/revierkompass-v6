@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import { Plus, Edit2, Trash2, Search, MapPin, Check, X, Clock, User } from 'lucide-react'
+import { Plus, Edit2, Trash2, Search, MapPin, Check, X, Clock, User, Building2 } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import adminAddressService, { Address, CreateAddressData, UpdateAddressData } from '@/services/api/admin-address.service'
+import { useAdminStore } from '@/store/useAdminStore'
 
 interface AddressModalProps {
   address: Address | null
@@ -11,6 +12,7 @@ interface AddressModalProps {
 }
 
 const AddressModal: React.FC<AddressModalProps> = ({ address, isOpen, onClose, onSave }) => {
+  const { stations } = useAdminStore()
   const [formData, setFormData] = useState({
     name: '',
     street: '',
@@ -20,9 +22,12 @@ const AddressModal: React.FC<AddressModalProps> = ({ address, isOpen, onClose, o
     isVerified: false,
     isActive: true,
     reviewStatus: 'pending' as 'pending' | 'approved' | 'rejected',
+    parentId: '' as string,
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const availablePraesidien = stations.filter(s => s.type === 'praesidium' && s.isActive)
 
   useEffect(() => {
     if (address && isOpen) {
@@ -35,6 +40,7 @@ const AddressModal: React.FC<AddressModalProps> = ({ address, isOpen, onClose, o
         isVerified: address.isVerified || false,
         isActive: address.isActive !== false,
         reviewStatus: address.reviewStatus || 'pending',
+        parentId: (address as any).parentId || '',
       })
     } else if (!address && isOpen) {
       setFormData({
@@ -46,6 +52,7 @@ const AddressModal: React.FC<AddressModalProps> = ({ address, isOpen, onClose, o
         isVerified: false,
         isActive: true,
         reviewStatus: 'pending',
+        parentId: '',
       })
     }
   }, [address, isOpen])
@@ -198,6 +205,28 @@ const AddressModal: React.FC<AddressModalProps> = ({ address, isOpen, onClose, o
                   <option value="rejected">Abgelehnt</option>
                 </select>
               </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <Building2 className="inline w-4 h-4 mr-1" />
+                  Präsidium zuordnen (optional)
+                </label>
+                <select
+                  value={formData.parentId}
+                  onChange={(e) => setFormData(prev => ({ ...prev, parentId: e.target.value }))}
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                >
+                  <option value="">Kein Präsidium zuordnen</option>
+                  {availablePraesidien.map((praesidium) => (
+                    <option key={praesidium.id} value={praesidium.id}>
+                      {praesidium.name} ({praesidium.city})
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Wählen Sie ein Präsidium aus, um diese Adresse einem bestehenden Präsidium zuzuordnen.
+                </p>
+              </div>
             </div>
 
             <div className="space-y-3">
@@ -249,6 +278,7 @@ const AdminAddressManagement: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState('all')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingAddress, setEditingAddress] = useState<Address | null>(null)
+  const { stations } = useAdminStore()
 
   useEffect(() => {
     loadAddresses()
@@ -350,6 +380,12 @@ const AdminAddressManagement: React.FC = () => {
     }
   }
 
+  const getPraesidiumName = (parentId: string | undefined) => {
+    if (!parentId) return null
+    const praesidium = stations.find(s => s.id === parentId && s.type === 'praesidium')
+    return praesidium ? praesidium.name : null
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -445,6 +481,12 @@ const AdminAddressManagement: React.FC = () => {
                       <div className="flex items-center gap-2">
                         <User className="w-4 h-4 text-gray-400" />
                         <span>{address.user.email}</span>
+                      </div>
+                    )}
+                    {address.parentId && (
+                      <div className="flex items-center gap-2">
+                        <Building2 className="w-4 h-4 text-gray-400" />
+                        <span>Präsidium: {getPraesidiumName(address.parentId)}</span>
                       </div>
                     )}
                   </div>
