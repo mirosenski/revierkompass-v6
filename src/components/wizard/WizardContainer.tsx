@@ -8,7 +8,7 @@ import Step3PremiumExport from './Step3PremiumExport';
 import { fetchStations } from '@/services/api/backend-api.service';
 
 const WizardContainer: React.FC = () => {
-  const { wizard, setWizardStep } = useAppStore();
+  const { wizard, setWizardStep, setSelectedStations, setSelectedCustomAddresses } = useAppStore();
 
   // Auto-load stations on mount
   useEffect(() => {
@@ -24,6 +24,17 @@ const WizardContainer: React.FC = () => {
     
     loadStations();
   }, []);
+
+  // Reset-Funktion für Schritt 2
+  const handleStepChange = (step: number) => {
+    if (step === 2) {
+      // Beim Wechsel zu Schritt 2 alle Auswahlen zurücksetzen
+      setSelectedStations([]);
+      setSelectedCustomAddresses([]);
+      console.log('🔄 WizardContainer: Auswahl für Schritt 2 zurückgesetzt');
+    }
+    setWizardStep(step);
+  };
 
   const steps = [
     {
@@ -95,7 +106,7 @@ const WizardContainer: React.FC = () => {
                   }`}
                   onClick={() => {
                     if (isCompleted || wizard.currentStep >= step.number) {
-                      setWizardStep(step.number);
+                      handleStepChange(step.number);
                     }
                   }}
                 >

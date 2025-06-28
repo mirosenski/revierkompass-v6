@@ -6,7 +6,7 @@ import { toast } from 'react-hot-toast';
 
 const Step1AddressInputSimple: React.FC = () => {
   const [address, setAddress] = useState('');
-  const { setStartAddress, setWizardStep, wizard } = useAppStore();
+  const { setStartAddress, setWizardStep, setSelectedStations, setSelectedCustomAddresses, wizard } = useAppStore();
 
   const handleSubmit = (inputAddress: string) => {
     if (!inputAddress.trim()) {
@@ -31,6 +31,12 @@ const Step1AddressInputSimple: React.FC = () => {
     };
 
     setStartAddress(addressData);
+    
+    // Reset-Auswahl vor dem Wechsel zu Schritt 2
+    setSelectedStations([]);
+    setSelectedCustomAddresses([]);
+    console.log('🔄 Step1: Auswahl vor Schritt 2 zurückgesetzt');
+    
     toast.success('Adresse erfolgreich geocodiert!');
     
     // Sofort zu Schritt 2 weiterleiten

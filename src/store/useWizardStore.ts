@@ -55,9 +55,9 @@ export const useWizardStore = create<WizardStore>()(
       partialize: (state) => ({
         startAddress: state.startAddress,
         selectedPraesidiumId: state.selectedPraesidiumId,
-        selectedReviereIds: state.selectedReviereIds,
-        selectedStations: state.selectedStations,
-        selectedCustomAddresses: state.selectedCustomAddresses
+        selectedReviereIds: state.selectedReviereIds
+        // selectedStations und selectedCustomAddresses werden NICHT persistiert
+        // damit sie bei jedem Neuladen zurückgesetzt werden
       })
     }
   )

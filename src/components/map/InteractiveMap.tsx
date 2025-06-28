@@ -484,6 +484,79 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
 
   return (
     <div className="space-y-6">
+      {/* Moderne Status-Anzeige für Kartenansicht */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 border border-gray-200/50 dark:border-gray-700/50"
+      >
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+          {/* Karten-Status */}
+          <div className="flex items-center space-x-4">
+            <div className="relative">
+              <div className="w-12 h-12 bg-gradient-to-br from-green-600 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                <MapPin className="h-6 w-6 text-white" />
+              </div>
+              {routeResults.length > 0 && (
+                <div className="absolute -top-1 -right-1 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                  {routeResults.length}
+                </div>
+              )}
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                Interaktive Kartenansicht
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400">
+                {routeResults.length === 0 
+                  ? 'Klicken Sie auf Marker um Stationen auszuwählen' 
+                  : `${routeResults.length} Stationen auf der Karte sichtbar`
+                }
+              </p>
+            </div>
+          </div>
+
+          {/* Karten-Aktionen */}
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={fitToRoutes}
+              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors shadow-sm"
+            >
+              <Maximize className="h-4 w-4" />
+              <span className="text-sm font-medium">Alle anzeigen</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Karten-Statistiken */}
+        {routeResults.length > 0 && (
+          <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 text-center">
+              <div className="text-lg font-bold text-blue-600">{routeResults.length}</div>
+              <div className="text-xs text-gray-600 dark:text-gray-400">Stationen</div>
+            </div>
+            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 text-center">
+              <div className="text-lg font-bold text-green-600">
+                {routeResults.reduce((sum, r) => sum + r.distance, 0).toFixed(1)}
+              </div>
+              <div className="text-xs text-gray-600 dark:text-gray-400">Gesamt km</div>
+            </div>
+            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 text-center">
+              <div className="text-lg font-bold text-purple-600">
+                {routeResults.reduce((sum, r) => sum + r.duration, 0)}
+              </div>
+              <div className="text-xs text-gray-600 dark:text-gray-400">Gesamt min</div>
+            </div>
+            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 text-center">
+              <div className="text-lg font-bold text-orange-600">
+                {routeResults.reduce((sum, r) => sum + r.estimatedFuel, 0).toFixed(1)}
+              </div>
+              <div className="text-xs text-gray-600 dark:text-gray-400">Liter</div>
+            </div>
+          </div>
+        )}
+      </motion.div>
+
       {/* Map Controls */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -543,7 +616,7 @@ const InteractiveMap: React.FC<InteractiveMapProps> = ({
             <div className="space-y-2 max-h-80 overflow-y-auto">
               {routeResults
                 .filter(route => route.id && route.id !== 'undefined' && route.id !== 'null' && !isNaN(Number(route.id)))
-                .map((route) => (
+                .map(route => (
                 <div key={route.id} className="flex items-center justify-between">
                   <div className="flex items-center space-x-2 flex-1 min-w-0">
                     <button
