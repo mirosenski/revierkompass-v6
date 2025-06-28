@@ -711,10 +711,12 @@ const AdminStationManagement: React.FC = () => {
   useEffect(() => {
     const loadStationsWithOptions = async () => {
       try {
+        console.log('🔄 Lade Stationen mit Optionen:', { all: filters.showInactive, take: 1000 });
         await loadStations({ 
           all: filters.showInactive, 
           take: 1000
         });
+        console.log('✅ Stationen erfolgreich geladen');
       } catch (err) {
         console.error('❌ Fehler beim Laden der Stationen:', err);
         toast.error('Fehler beim Laden der Stationen');
@@ -731,6 +733,7 @@ const AdminStationManagement: React.FC = () => {
       .map(s => s.id)
       .filter(Boolean);
     
+    console.log('🔍 Auto-expand Präsidien:', praesidiumIds);
     setExpandedPresidia(new Set(praesidiumIds));
   }, [stations]);
 
@@ -774,12 +777,67 @@ const AdminStationManagement: React.FC = () => {
     return { praesidien, availablePraesidien, allCities };
   }, [filteredStations, stations]);
 
-  // Get reviere for a specific praesidium
+  // Get reviere for a specific praesidium - verwende alle Stationen, nicht nur gefilterte
   const getReviere = useCallback((praesidiumId: string) => {
-    return filteredStations.filter(s => 
+    // Verwende alle Stationen für Reviere, nicht nur gefilterte
+    // Das stellt sicher, dass neu erstellte Reviere angezeigt werden
+    const allReviere = stations.filter(s => 
       s.type === 'revier' && s.parentId === praesidiumId
     );
-  }, [filteredStations]);
+    
+    // Erweiterte Debug-Ausgabe für neu erstellte Reviere
+    console.log(`🔍 getReviere für ${praesidiumId}:`, {
+      totalStations: stations.length,
+      totalFilteredStations: filteredStations.length,
+      reviereFound: allReviere.length,
+      reviere: allReviere.map(r => ({ 
+        id: r.id, 
+        name: r.name, 
+        parentId: r.parentId, 
+        isActive: r.isActive,
+        type: r.type,
+        city: r.city
+      })),
+      allReviere: stations.filter(s => s.type === 'revier').map(r => ({ 
+        id: r.id, 
+        name: r.name, 
+        parentId: r.parentId, 
+        isActive: r.isActive,
+        type: r.type,
+        city: r.city
+      })),
+      praesidiumExists: stations.some(s => s.id === praesidiumId)
+    });
+    
+    return allReviere;
+  }, [stations, filteredStations]);
+
+  // Debug-Ausgabe für Stationen-Updates
+  useEffect(() => {
+    console.log('🔍 Stations Update:', {
+      totalStations: stations.length,
+      praesidien: stations.filter(s => s.type === 'praesidium').length,
+      reviere: stations.filter(s => s.type === 'revier').length,
+      filteredStations: filteredStations.length,
+      filters: filters,
+      showInactive: filters.showInactive,
+      activeReviere: stations.filter(s => s.type === 'revier' && s.isActive).length,
+      inactiveReviere: stations.filter(s => s.type === 'revier' && !s.isActive).length
+    });
+    
+    // Detaillierte Ausgabe aller Reviere
+    const allReviere = stations.filter(s => s.type === 'revier');
+    if (allReviere.length > 0) {
+      console.log('📋 Alle Reviere Details:', allReviere.map(r => ({
+        id: r.id,
+        name: r.name,
+        parentId: r.parentId,
+        isActive: r.isActive,
+        city: r.city,
+        parentName: stations.find(s => s.id === r.parentId)?.name || 'UNKNOWN'
+      })));
+    }
+  }, [stations, filteredStations, filters]);
 
   // Event Handlers
   const handleFilterChange = useCallback((key: keyof FilterState, value: any) => {
@@ -812,16 +870,39 @@ const AdminStationManagement: React.FC = () => {
 
   const handleSaveStation = useCallback(async (formData: StationFormData) => {
     try {
+      console.log('🔄 handleSaveStation aufgerufen mit:', formData);
+      console.log('📊 Aktueller Zustand vor Speichern:', {
+        totalStations: stations.length,
+        reviere: stations.filter(s => s.type === 'revier').length,
+        praesidien: stations.filter(s => s.type === 'praesidium').length
+      });
+      
       if (editingStation) {
+        console.log('📝 Aktualisiere bestehende Station:', editingStation.id);
         await updateStation(editingStation.id, formData);
+        toast.success('Station erfolgreich aktualisiert');
       } else {
+        console.log('➕ Erstelle neue Station');
         await createStation(formData as Station);
+        toast.success('Station erfolgreich erstellt');
       }
       
-      // Reload stations to get fresh data
+      // Warte kurz, damit der Store die Stationen neu laden kann
+      console.log('⏳ Warte auf Store-Update...');
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Manuell Stationen neu laden mit aktuellen Filtern
+      console.log('🔄 Lade Stationen manuell neu...');
       await loadStations({ 
         all: filters.showInactive, 
         take: 1000
+      });
+      
+      console.log('✅ Station erfolgreich gespeichert und Store aktualisiert');
+      console.log('📊 Zustand nach Speichern:', {
+        totalStations: stations.length,
+        reviere: stations.filter(s => s.type === 'revier').length,
+        praesidien: stations.filter(s => s.type === 'praesidium').length
       });
       
       handleCloseModal();
@@ -829,7 +910,7 @@ const AdminStationManagement: React.FC = () => {
       console.error('❌ Fehler beim Speichern:', err);
       throw err; // Re-throw to let modal handle the error display
     }
-  }, [editingStation, updateStation, createStation, loadStations, filters.showInactive, handleCloseModal]);
+  }, [editingStation, updateStation, createStation, handleCloseModal, loadStations, filters.showInactive, stations.length]);
 
   const handleDeleteStation = useCallback(async (stationId: string) => {
     try {
@@ -904,9 +985,52 @@ const AdminStationManagement: React.FC = () => {
 
   const hasActiveFilters = filters.search || filters.city || filters.type !== 'all';
 
+  // Debug-Anzeige (nur in Entwicklung)
+  const debugInfo = process.env.NODE_ENV === 'development' && (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg mb-4">
+      <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200 mb-2">Debug Info:</h3>
+      <div className="text-xs text-yellow-700 dark:text-yellow-300 space-y-1">
+        <div>Total Stationen: {stations.length}</div>
+        <div>Gefilterte Stationen: {filteredStations.length}</div>
+        <div>Präsidien: {stations.filter(s => s.type === 'praesidium').length}</div>
+        <div>Reviere: {stations.filter(s => s.type === 'revier').length}</div>
+        <div>Aktive Reviere: {stations.filter(s => s.type === 'revier' && s.isActive).length}</div>
+        <div>Inaktive Reviere: {stations.filter(s => s.type === 'revier' && !s.isActive).length}</div>
+        <div>Expandierte Präsidien: {expandedPresidia.size}</div>
+        <div>Aktive Filter: {hasActiveFilters ? 'Ja' : 'Nein'}</div>
+        <div>Show Inactive: {filters.showInactive ? 'Ja' : 'Nein'}</div>
+        <div className="mt-2 font-medium">Präsidien Details:</div>
+        {stations
+          .filter(s => s.type === 'praesidium')
+          .map(praesidium => {
+            const reviere = stations.filter(s => s.type === 'revier' && s.parentId === praesidium.id);
+            const activeReviere = reviere.filter(r => r.isActive);
+            const inactiveReviere = reviere.filter(r => !r.isActive);
+            return (
+              <div key={praesidium.id} className="ml-2">
+                • {praesidium.name}: {reviere.length} Reviere ({activeReviere.length} aktiv, {inactiveReviere.length} inaktiv)
+                {reviere.length > 0 && (
+                  <div className="ml-4 text-xs">
+                    {reviere.map(r => (
+                      <div key={r.id} className={`${r.isActive ? 'text-green-600' : 'text-red-600'}`}>
+                        - {r.name} ({r.isActive ? 'aktiv' : 'inaktiv'})
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+      </div>
+    </div>
+  );
+
   return (
     <ErrorBoundary>
       <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+        {/* Debug Info */}
+        {debugInfo}
+
         {/* Sticky Header */}
         <div className="sticky top-0 z-40 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md shadow-sm border-b border-gray-200/50 dark:border-gray-700/50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -1008,7 +1132,7 @@ const AdminStationManagement: React.FC = () => {
 
         {/* Station Cards */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
-          {filteredStations.length === 0 ? (
+          {stations.length === 0 ? (
             <div className="text-center py-12">
               <div className="bg-gray-100 dark:bg-gray-800 rounded-full p-4 w-20 h-20 mx-auto mb-4">
                 <Building2 className="w-12 h-12 text-gray-400 mx-auto" />
@@ -1039,45 +1163,57 @@ const AdminStationManagement: React.FC = () => {
             </div>
           ) : (
             <div className="space-y-4">
-              {praesidien.map((praesidium, pIndex) => {
-                const praesidiumId = getSafeId(praesidium, pIndex);
-                const reviere = getReviere(praesidium.id);
-                
-                return (
-                  <div key={praesidiumId} className="animate-in fade-in-50 duration-200">
-                    <StationCard
-                      station={praesidium}
-                      onEdit={handleEditStation}
-                      onDelete={handleDeleteStation}
-                      isExpanded={expandedPresidia.has(praesidium.id)}
-                      onToggle={() => togglePraesidiumExpansion(praesidium.id)}
-                    >
-                      {expandedPresidia.has(praesidium.id) && reviere.length > 0 && (
-                        <div className="border-t border-gray-200 dark:border-gray-700 p-4 bg-gray-50/50 dark:bg-gray-800/50">
-                          <div className="space-y-3">
-                            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                              Reviere ({reviere.length})
-                            </h4>
-                            {reviere.map((revier, rIndex) => {
-                              const revierId = getSafeId(revier, rIndex);
-                              return (
-                                <StationCard
-                                  key={revierId}
-                                  station={revier}
-                                  onEdit={handleEditStation}
-                                  onDelete={handleDeleteStation}
-                                  isExpanded={false}
-                                  onToggle={() => {}}
-                                />
-                              );
-                            })}
+              {/* Zeige alle Präsidien an */}
+              {stations
+                .filter(s => s.type === 'praesidium')
+                .map((praesidium, pIndex) => {
+                  const praesidiumId = getSafeId(praesidium, pIndex);
+                  const allReviere = getReviere(praesidium.id);
+                  
+                  // Debug-Ausgabe
+                  console.log(`🔍 Präsidium "${praesidium.name}":`, {
+                    id: praesidium.id,
+                    allReviere: allReviere.length,
+                    visibleReviere: allReviere.length,
+                    hasActiveFilters
+                  });
+                  
+                  return (
+                    <div key={praesidiumId} className="animate-in fade-in-50 duration-200">
+                      <StationCard
+                        station={praesidium}
+                        onEdit={handleEditStation}
+                        onDelete={handleDeleteStation}
+                        isExpanded={expandedPresidia.has(praesidium.id)}
+                        onToggle={() => togglePraesidiumExpansion(praesidium.id)}
+                      >
+                        {expandedPresidia.has(praesidium.id) && allReviere.length > 0 && (
+                          <div className="border-t border-gray-200 dark:border-gray-700 p-4 bg-gray-50/50 dark:bg-gray-800/50">
+                            <div className="space-y-3">
+                              <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                                Reviere ({allReviere.length})
+                              </h4>
+                              {allReviere.map((revier, rIndex) => {
+                                const revierId = getSafeId(revier, rIndex);
+                                
+                                return (
+                                  <StationCard
+                                    key={revierId}
+                                    station={revier}
+                                    onEdit={handleEditStation}
+                                    onDelete={handleDeleteStation}
+                                    isExpanded={false}
+                                    onToggle={() => {}}
+                                  />
+                                );
+                              })}
+                            </div>
                           </div>
-                        </div>
-                      )}
-                    </StationCard>
-                  </div>
-                );
-              })}
+                        )}
+                      </StationCard>
+                    </div>
+                  );
+                })}
             </div>
           )}
         </div>

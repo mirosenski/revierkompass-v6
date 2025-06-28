@@ -15,30 +15,30 @@
     "import-stations": "tsx src/scripts/import-stations-from-excel.ts"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "cors": "^2.8.5",
-    "helmet": "^7.1.0",
+    "@prisma/client": "^6.10.1",
     "bcrypt": "^5.1.1",
-    "jsonwebtoken": "^9.0.2",
-    "express-rate-limit": "^7.1.5",
-    "zod": "^3.22.4",
-    "@prisma/client": "^5.7.1",
+    "body-parser": "^1.20.2",
+    "cors": "^2.8.5",
     "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-rate-limit": "^7.1.5",
+    "helmet": "^7.1.0",
+    "jsonwebtoken": "^9.0.2",
     "xlsx": "^0.18.5",
-    "body-parser": "^1.20.2"
+    "zod": "^3.22.4"
   },
   "devDependencies": {
-    "@types/express": "^4.17.21",
-    "@types/cors": "^2.8.17",
     "@types/bcrypt": "^5.0.2",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/jest": "^29.5.10",
     "@types/jsonwebtoken": "^9.0.5",
     "@types/node": "^20.10.4",
-    "typescript": "^5.3.3",
-    "tsx": "^4.6.2",
-    "prisma": "^5.7.1",
     "jest": "^29.7.0",
+    "prisma": "^6.10.1",
+    "supertest": "^6.3.3",
     "ts-jest": "^29.1.1",
-    "@types/jest": "^29.5.10",
-    "supertest": "^6.3.3"
+    "tsx": "^4.6.2",
+    "typescript": "^5.3.3"
   }
 }

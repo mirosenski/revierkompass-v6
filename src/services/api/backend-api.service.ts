@@ -52,14 +52,24 @@ export const createStation = async (station: Omit<Station, 'id' | 'lastModified'
   // Temporär auskommentiert für Tests
   // if (!token) throw new Error('Kein Authentifizierungs-Token gefunden. Bitte einloggen.');
   try {
-    console.log('🔄 Erstelle neue Station...');
+    console.log('🔄 Erstelle neue Station...', station);
     const headers: any = {
       'Content-Type': 'application/json'
     };
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
-    const response = await axios.post(API_URL, station, { headers });
+    
+    // Stelle sicher, dass Koordinaten korrekt formatiert sind
+    const stationData = {
+      ...station,
+      coordinates: Array.isArray(station.coordinates) 
+        ? station.coordinates 
+        : [(station.coordinates as any).lat || 0, (station.coordinates as any).lng || 0]
+    };
+    
+    console.log('📤 Sende Station-Daten:', stationData);
+    const response = await axios.post(API_URL, stationData, { headers });
     console.log('✅ Station erfolgreich erstellt:', response.data);
     return response.data;
   } catch (error) {
