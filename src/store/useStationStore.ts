@@ -32,11 +32,21 @@ export const useStationStore = create<StationStore>((set, get) => ({
     }
   },
 
-  getStationsByType: (type) => get().stations.filter((s) => s.type === type),
+  getStationsByType: (type) => {
+    const stations = get().stations;
+    if (!Array.isArray(stations)) return [];
+    return stations.filter((s) => s.type === type);
+  },
 
-  getReviereByPraesidium: (praesidiumId) =>
-    get().stations.filter((s) => s.parentId === praesidiumId),
+  getReviereByPraesidium: (praesidiumId) => {
+    const stations = get().stations;
+    if (!Array.isArray(stations)) return [];
+    return stations.filter((s) => s.parentId === praesidiumId);
+  },
 
-  getPraesidiumById: (id) =>
-    get().stations.find((s) => s.id === id && s.type === 'praesidium')
+  getPraesidiumById: (id) => {
+    const stations = get().stations;
+    if (!Array.isArray(stations)) return undefined;
+    return stations.find((s) => s.id === id && s.type === 'praesidium');
+  }
 }))
