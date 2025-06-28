@@ -10,7 +10,7 @@ const selectedPraesidien = new Set<string>();
 const autoSelectedReviere = new Set<string>();
 const manuallySelectedReviere = new Set<string>();
 
-// GET /api/stations - Public endpoint
+// GET /api/stationen - Public endpoint
 router.get('/', async (req, res) => {
   try {
     const { 
@@ -66,7 +66,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/stations/:id - Public endpoint
+// GET /api/stationen/:id - Public endpoint
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -86,7 +86,7 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// POST /api/stations - Admin only
+// POST /api/stationen - Admin only
 router.post('/', 
   authenticateToken, 
   requireAdmin, 
@@ -112,7 +112,7 @@ router.post('/',
   }
 );
 
-// PUT /api/stations/:id - Admin only
+// PUT /api/stationen/:id - Admin only
 router.put('/:id', 
   authenticateToken, 
   requireAdmin,
@@ -148,7 +148,7 @@ router.put('/:id',
   }
 );
 
-// DELETE /api/stations/:id - Admin only (Soft delete)
+// DELETE /api/stationen/:id - Admin only (Soft delete)
 router.delete('/:id', 
   authenticateToken, 
   requireAdmin,
@@ -183,7 +183,7 @@ router.delete('/:id',
   }
 );
 
-// POST /api/stations/bulk-import - Admin only
+// POST /api/stationen/bulk-import - Admin only
 router.post('/bulk-import',
   authenticateToken,
   requireAdmin,
@@ -234,7 +234,7 @@ router.post('/bulk-import',
   }
 );
 
-// GET /api/stations/hierarchical - Public
+// GET /api/stationen/hierarchical - Public
 router.get('/hierarchical', async (req, res) => {
   try {
     const praesidien = await prisma.policeStation.findMany({
@@ -248,7 +248,7 @@ router.get('/hierarchical', async (req, res) => {
   }
 });
 
-// GET /api/stations/praesidien - Public
+// GET /api/stationen/praesidien - Public
 router.get('/praesidien', async (_req, res) => {
   try {
     const praesidien = await prisma.policeStation.findMany({
@@ -261,7 +261,7 @@ router.get('/praesidien', async (_req, res) => {
   }
 });
 
-// GET /api/stations/praesidien/:id/revier - Public
+// GET /api/stationen/praesidien/:id/revier - Public
 router.get('/praesidien/:id/revier', async (req, res) => {
   try {
     const { id } = req.params;
@@ -275,7 +275,7 @@ router.get('/praesidien/:id/revier', async (req, res) => {
   }
 });
 
-// POST /api/stations/selection - Selection logic
+// POST /api/stationen/selection - Selection logic
 router.post('/selection', async (req, res) => {
   const { action, praesidiumId, revierId } = req.body;
 
@@ -315,7 +315,7 @@ router.post('/selection', async (req, res) => {
   }
 });
 
-// GET /api/stations/stats - Admin only
+// GET /api/stationen/stats - Admin only
 router.get('/admin/stats', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const [

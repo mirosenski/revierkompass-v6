@@ -101,17 +101,17 @@ GET    /api/auth/profile    # Geschützt, gibt User-Daten
 
 ### Polizeistationen (Öffentlich)
 ```http
-GET    /api/stations        # Alle Stationen (mit Filter)
-GET    /api/stations/:id    # Einzelne Station
+GET    /api/stationen        # Alle Stationen (mit Filter)
+GET    /api/stationen/:id    # Einzelne Station
 ```
 
 ### Polizeistationen (Admin-only)
 ```http
-POST   /api/stations        # Neue Station erstellen
-PUT    /api/stations/:id    # Station aktualisieren
-DELETE /api/stations/:id    # Station deaktivieren
-POST   /api/stations/bulk-import  # Bulk-Import
-GET    /api/stations/admin/stats  # Statistiken
+POST   /api/stationen        # Neue Station erstellen
+PUT    /api/stationen/:id    # Station aktualisieren
+DELETE /api/stationen/:id    # Station deaktivieren
+POST   /api/stationen/bulk-import  # Bulk-Import
+GET    /api/stationen/admin/stats  # Statistiken
 ```
 
 ### Custom-Adressen
