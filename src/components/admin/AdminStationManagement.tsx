@@ -428,10 +428,16 @@ const AdminStationManagement: React.FC = () => {
 
   const allCities = Array.from(new Set(stations.map(s => s.city))).sort()
   const praesidien = filteredStations.filter(s => s.type === 'praesidium')
-  const getReviere = (praesidiumId: string) =>
-    filteredStations.filter(s => s.type === 'revier' && s.parentId === praesidiumId)
+  const getReviere = (praesidiumId: string) => {
+    const reviere = filteredStations.filter(s => s.type === 'revier' && s.parentId === praesidiumId)
+    console.log(`🔍 getReviere für ${praesidiumId}:`, reviere.length, 'Reviere gefunden')
+    console.log('🔍 Alle Reviere:', filteredStations.filter(s => s.type === 'revier').map(r => ({ name: r.name, parentId: r.parentId })))
+    return reviere
+  }
 
   const handleSave = async (formData: Partial<Station>) => {
+    console.log('🔍 handleSave aufgerufen mit:', formData)
+    
     const {
       name,
       type,
@@ -458,22 +464,27 @@ const AdminStationManagement: React.FC = () => {
       parentId,
     }
 
+    console.log('🔍 newStationData:', newStationData)
+
     try {
       if (editingStation) {
+        console.log('🔍 Aktualisiere Station:', editingStation.id)
         await updateStation(editingStation.id, newStationData)
         toast.success('Station erfolgreich aktualisiert')
       } else {
+        console.log('🔍 Erstelle neue Station')
         await createStation(newStationData as Station)
         toast.success('Station erfolgreich erstellt')
       }
       
+      console.log('🔍 Lade Stationen neu...')
       // Explizit die Stationen neu laden
       await loadStations()
       
       setEditingStation(null)
       setIsModalOpen(false)
     } catch (err) {
-      console.error('Fehler beim Speichern:', err)
+      console.error('❌ Fehler beim Speichern:', err)
       toast.error('Fehler beim Speichern')
     }
   }

@@ -1076,21 +1076,6 @@
     "parentId": "pp-ulm-1"
   },
   {
-    "name": "Teststation",
-    "type": "revier",
-    "city": "Teststadt",
-    "address": "Teststraße 1",
-    "coordinates": [
-      48,
-      9
-    ],
-    "telefon": "123456789",
-    "notdienst24h": false,
-    "isActive": true,
-    "id": "NaN",
-    "parentId": "pp-ulm-1"
-  },
-  {
     "name": "Teststation 2",
     "type": "revier",
     "city": "Teststadt",
@@ -1303,5 +1288,54 @@
     "parentId": "pp-stuttgart-1",
     "id": "1751099295254",
     "lastModified": "2025-06-28T08:28:15.254Z"
+  },
+  {
+    "name": "Igor Mirosenski",
+    "type": "revier",
+    "city": "Stuttgart",
+    "address": "Rohrdommelweg 2, 70378 Stuttgart",
+    "coordinates": [
+      48.825514,
+      9.200718
+    ],
+    "telefon": "017654070622",
+    "email": "mirosenski@gmail.com",
+    "notdienst24h": false,
+    "isActive": true,
+    "parentId": "pp-stuttgart-1",
+    "id": "1751099458974",
+    "lastModified": "2025-06-28T08:30:58.974Z"
+  },
+  {
+    "name": "Test Revier Stuttgart",
+    "type": "revier",
+    "city": "Stuttgart",
+    "address": "Teststraße 123",
+    "coordinates": [
+      48.7758,
+      9.1829
+    ],
+    "telefon": "0711 123456",
+    "email": "test@test.de",
+    "parentId": "pp-stuttgart-1",
+    "id": "1751099554604",
+    "lastModified": "2025-06-28T08:32:34.604Z"
+  },
+  {
+    "name": "Igor Mirosenski",
+    "type": "revier",
+    "city": "Stuttgart",
+    "address": "Rohrdommelweg 2, 70378 Stuttgart",
+    "coordinates": [
+      0.0001,
+      0.0002
+    ],
+    "telefon": "017654070622",
+    "email": "mirosenski@gmail.com",
+    "notdienst24h": false,
+    "isActive": true,
+    "parentId": "pp-stuttgart-1",
+    "id": "1751099805942",
+    "lastModified": "2025-06-28T08:36:45.942Z"
   }
 ]

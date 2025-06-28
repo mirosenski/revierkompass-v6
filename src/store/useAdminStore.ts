@@ -26,12 +26,16 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
   error: null,
 
   loadStations: async () => {
+    console.log('🔄 useAdminStore: Lade Stationen...');
     set({ isLoading: true, error: null })
     try {
       const data = await fetchStations()
+      console.log('✅ useAdminStore: Stationen geladen:', data.length);
+      console.log('🔍 Stationen Details:', data.map(s => ({ name: s.name, type: s.type, parentId: s.parentId })))
       set({ stations: data, isLoading: false })
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Unknown error'
+      console.error('❌ useAdminStore: Fehler beim Laden:', message);
       set({ error: message, isLoading: false })
     }
   },

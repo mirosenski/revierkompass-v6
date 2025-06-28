@@ -71,10 +71,13 @@ app.get('/api/stationen', async (req, res) => {
 // Neue Station erstellen
 app.post('/api/stationen', async (req, res) => {
   try {
+    // ID aus dem Request-Body entfernen, damit Prisma automatisch generiert
+    const { id, ...stationData } = req.body;
+    
     const newStation = await prisma.policeStation.create({
       data: {
-        ...req.body,
-        coordinates: req.body.coordinates ? JSON.stringify(req.body.coordinates) : null
+        ...stationData,
+        coordinates: stationData.coordinates ? JSON.stringify(stationData.coordinates) : null
       }
     });
     
