@@ -6,13 +6,13 @@ export interface Station {
   /** Name des Präsidiums oder Reviers */
   name: string
   /** Art der Station: Präsidium oder Revier */
-  type: 'präsidium' | 'revier'
+  type: 'praesidium' | 'revier'
   /** Stadt, in der die Station liegt */
   city: string
   /** Vollständige Straßenadresse */
   address: string
-  /** Koordinaten in der Form "lat,lng" */
-  coordinates: string
+  /** Koordinaten in der Form [lat, lng] */
+  coordinates: [number, number]
   /** Telefonnummer der Station */
   telefon: string
   /** E-Mail-Adresse der Station */

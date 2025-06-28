@@ -1371,5 +1371,39 @@
     "parentId": "pp-stuttgart-1",
     "id": "1751101881943",
     "lastModified": "2025-06-28T09:11:21.943Z"
+  },
+  {
+    "name": "Igor Mirosenski",
+    "type": "revier",
+    "city": "Stuttgart",
+    "address": "Rohrdommelweg 2, 70378 Stuttgart",
+    "coordinates": [
+      48.825514,
+      9.200718
+    ],
+    "telefon": "017654070622",
+    "email": "mirosenski@gmail.com",
+    "notdienst24h": false,
+    "isActive": true,
+    "parentId": "pp-stuttgart-1",
+    "id": "1751105236675",
+    "lastModified": "2025-06-28T10:07:16.675Z"
+  },
+  {
+    "name": "Igor Mirosenski",
+    "type": "revier",
+    "city": "Stuttgart",
+    "address": "Rohrdommelweg 2, 70378 Stuttgart",
+    "coordinates": [
+      48.825514,
+      9.200718
+    ],
+    "telefon": "017654070622",
+    "email": "mirosenski@gmail.com",
+    "notdienst24h": false,
+    "isActive": true,
+    "parentId": "pp-stuttgart-1",
+    "id": "1751105493688",
+    "lastModified": "2025-06-28T10:11:33.688Z"
   }
 ]
