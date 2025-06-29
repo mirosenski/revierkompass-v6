@@ -25,6 +25,8 @@ export interface AddressCardProps {
     id: string;
     role: string;
   } | null;
+  checked?: boolean;
+  onCheck?: (id: string, checked: boolean) => void;
 }
 
 export interface AddressFiltersProps {
@@ -34,4 +36,5 @@ export interface AddressFiltersProps {
   allCities: string[];
   hasActiveFilters: boolean;
   filteredAddressesCount: number;
+  activeTab?: 'station' | 'user' | 'temporary';
 } 

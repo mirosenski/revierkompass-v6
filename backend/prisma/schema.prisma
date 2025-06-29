@@ -23,6 +23,11 @@ model PoliceStation {
   isActive     Boolean  @default(true)
   parentId     String?
   lastModified DateTime @default(now()) @updatedAt
+  
+  // Relations
+  children     PoliceStation[] @relation("StationHierarchy")
+  parent       PoliceStation?  @relation("StationHierarchy", fields: [parentId], references: [id])
+  addresses    CustomAddress[]
 }
 
 model CustomAddress {
@@ -44,5 +49,8 @@ model CustomAddress {
   addressType   String   @default("permanent") // "temporary", "permanent"
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+  
+  // Relations
+  parent        PoliceStation? @relation(fields: [parentId], references: [id])
 }
 

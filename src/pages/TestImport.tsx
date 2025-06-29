@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { importAllAddresses, showAddressStats, testAPIConnection } from '@/scripts/import-addresses';
+import { importAllStationsWithWarning, showAddressStats, testAPIConnection } from '@/scripts/import-addresses';
 
 const TestImport: React.FC = () => {
   const [isImporting, setIsImporting] = useState(false);
@@ -16,7 +16,7 @@ const TestImport: React.FC = () => {
       const dbCount = await testAPIConnection();
       console.log('📊 Aktuell in DB:', dbCount);
       
-      const importResult = await importAllAddresses();
+      const importResult = await importAllStationsWithWarning();
       console.log('📊 Import Ergebnis:', importResult);
       
       setResult(`Import abgeschlossen! ${importResult.totalCreated} Stationen erstellt, ${importResult.totalErrors} Fehler.`);

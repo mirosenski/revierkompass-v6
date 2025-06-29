@@ -1,31 +1,27 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Database, Upload, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
-import { importAllAddresses, showAddressStats, testAPIConnection } from '@/scripts/import-addresses';
+import { Database, Upload, CheckCircle, AlertCircle, RefreshCw, Trash2 } from 'lucide-react';
+import { importAllStationsWithWarning, showAddressStats, testAPIConnection } from '@/scripts/import-addresses';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 const AddressImporter: React.FC = () => {
   const [isImporting, setIsImporting] = useState(false);
   const [importResult, setImportResult] = useState<{ totalCreated: number; totalErrors: number } | null>(null);
-  const [currentStats, setCurrentStats] = useState<{ totalAddresses: number; cityCount: number } | null>(null);
+  const [stats, setStats] = useState<{ totalAddresses: number; cityCount: number } | null>(null);
   const [dbStationCount, setDbStationCount] = useState<number | null>(null);
 
   const handleImport = async () => {
     setIsImporting(true);
-    setImportResult(null);
-    
     try {
-      const result = await importAllAddresses();
+      const result = await importAllStationsWithWarning();
       setImportResult(result);
       
-      // Aktualisiere die Statistiken nach dem Import
-      setTimeout(() => {
-        showAddressStats();
-        testAPIConnection().then(count => setDbStationCount(count));
-      }, 1000);
-      
+      // Aktualisiere Statistiken nach dem Import
+      const stats = showAddressStats();
+      setStats(stats);
     } catch (error) {
       console.error('Import fehlgeschlagen:', error);
-      setImportResult({ totalCreated: 0, totalErrors: 1 });
     } finally {
       setIsImporting(false);
     }
@@ -33,7 +29,7 @@ const AddressImporter: React.FC = () => {
 
   const handleShowStats = () => {
     const stats = showAddressStats();
-    setCurrentStats(stats);
+    setStats(stats);
   };
 
   const handleTestConnection = async () => {
@@ -65,10 +61,10 @@ const AddressImporter: React.FC = () => {
           </div>
           <div className="mt-2">
             <span className="text-2xl font-bold text-blue-900 dark:text-blue-100">
-              {currentStats?.totalAddresses || '?'}
+              {stats?.totalAddresses || '?'}
             </span>
             <span className="text-sm text-blue-600 dark:text-blue-300 ml-1">
-              in {currentStats?.cityCount || '?'} Städten
+              in {stats?.cityCount || '?'} Städten
             </span>
           </div>
         </div>
@@ -140,23 +136,24 @@ const AddressImporter: React.FC = () => {
             <span>DB-Verbindung testen</span>
           </button>
 
-          <button
-            onClick={handleImport}
+          <Button 
+            onClick={handleImport} 
             disabled={isImporting}
-            className="px-6 py-2 bg-orange-600 hover:bg-orange-700 disabled:bg-orange-400 text-white rounded-lg transition-colors flex items-center space-x-2"
+            className="w-full"
+            variant="default"
           >
             {isImporting ? (
               <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                <span>Importiere...</span>
+                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                Importiere...
               </>
             ) : (
               <>
-                <Upload className="h-4 w-4" />
-                <span>Alle Adressen importieren</span>
+                <Upload className="mr-2 h-4 w-4" />
+                Alle Stationen importieren
               </>
             )}
-          </button>
+          </Button>
         </div>
 
         {/* Info-Box */}

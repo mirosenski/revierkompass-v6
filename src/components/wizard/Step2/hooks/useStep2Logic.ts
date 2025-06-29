@@ -444,76 +444,85 @@ export const useStep2Logic = () => {
     }
 
     try {
-      if (formData.addressType === 'temporary') {
-        // Temporäre Adresse: Nur lokal speichern
+      // Alle Adressen werden jetzt an das Backend gesendet
+      const addressData = {
+        name: formData.name,
+        street: formData.street,
+        zipCode: formData.zipCode,
+        city: formData.city,
+        addressType: formData.addressType,
+        parentId: formData.parentId,
+        reviewStatus: formData.addressType === 'temporary' ? 'approved' : 'pending',
+        isAnonymous: true, // Für anonyme Nutzer
+        coordinates: null // Könnte später durch Geocoding ergänzt werden
+      };
+
+      try {
+        // Backend-API aufrufen
+        const response = await fetch('/api/addresses', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(addressData)
+        });
+
+        if (!response.ok) {
+          throw new Error('Backend nicht verfügbar');
+        }
+
+        const result = await response.json();
+        
+        // Lokal hinzufügen mit Backend-ID
         addCustomAddress({
           name: formData.name,
           street: formData.street,
           zipCode: formData.zipCode,
           city: formData.city,
-          addressType: 'temporary'
+          addressType: formData.addressType,
+          backendId: result.address.id,
+          parentId: formData.parentId
+        });
+
+        if (formData.addressType === 'temporary') {
+          toast.success('Temporäre Adresse hinzugefügt und sofort verfügbar');
+        } else {
+          toast.success('Permanente Adresse zur Überprüfung eingereicht');
+        }
+        
+        announceToScreenReader(formData.addressType === 'temporary' ? 'Temporäre Adresse hinzugefügt' : 'Permanente Adresse eingereicht');
+        
+      } catch (backendError) {
+        console.warn('Backend nicht verfügbar, speichere nur lokal:', backendError);
+        
+        // Fallback: Nur lokal speichern
+        addCustomAddress({
+          name: formData.name,
+          street: formData.street,
+          zipCode: formData.zipCode,
+          city: formData.city,
+          addressType: formData.addressType,
+          parentId: formData.parentId
         });
         
-        toast.success('Temporäre Adresse hinzugefügt');
-        announceToScreenReader('Temporäre Adresse hinzugefügt');
-      } else {
-        // Permanente Adresse: Versuche Backend, falls nicht verfügbar -> temporär speichern
-        try {
-          const response = await fetch('/api/addresses/anonymous', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              name: formData.name,
-              street: formData.street,
-              zipCode: formData.zipCode,
-              city: formData.city,
-              coordinates: [48.7758, 9.1829], // Default Stuttgart coordinates
-              parentId: formData.parentId || null,
-              addressType: 'permanent'
-            }),
-          });
-
-          if (!response.ok) {
-            throw new Error('Backend nicht verfügbar');
-          }
-
-          const result = await response.json();
-          
-          toast.success('Adresse zur Überprüfung eingereicht');
-          announceToScreenReader('Adresse zur Überprüfung eingereicht');
-          
-          // Lokal hinzufügen mit Backend-ID für spätere Bearbeitung
-          addCustomAddress({
-            name: formData.name,
-            street: formData.street,
-            zipCode: formData.zipCode,
-            city: formData.city,
-            addressType: 'permanent',
-            backendId: result.address.id,
-            parentId: formData.parentId
-          });
-        } catch (backendError) {
-          console.warn('Backend nicht verfügbar, speichere als temporäre Adresse:', backendError);
-          
-          // Fallback: Als temporäre Adresse speichern
-          addCustomAddress({
-            name: formData.name,
-            street: formData.street,
-            zipCode: formData.zipCode,
-            city: formData.city,
-            addressType: 'temporary', // Fallback zu temporär
-            parentId: formData.parentId
-          });
-          
-          toast.success('Adresse als temporäre Adresse hinzugefügt (Backend nicht verfügbar)');
-          announceToScreenReader('Adresse als temporäre Adresse hinzugefügt');
+        if (formData.addressType === 'temporary') {
+          toast.success('Temporäre Adresse lokal hinzugefügt (Backend nicht verfügbar)');
+        } else {
+          toast.success('Permanente Adresse lokal gespeichert (Backend nicht verfügbar)');
         }
       }
-      
-      setFormData({ name: '', street: '', zipCode: '', city: '', addressType: 'temporary', parentId: undefined });
+
+      // Formular zurücksetzen
+      setFormData({
+        name: '',
+        street: '',
+        zipCode: '',
+        city: '',
+        addressType: 'temporary',
+        parentId: undefined
+      });
       setShowAddForm(false);
+      
     } catch (error) {
       console.error('Fehler beim Hinzufügen der Adresse:', error);
       toast.error('Fehler beim Hinzufügen der Adresse');

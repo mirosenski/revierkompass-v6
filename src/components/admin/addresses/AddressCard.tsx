@@ -8,7 +8,9 @@ const AddressCard: React.FC<AddressCardProps> = ({
   onDelete, 
   onApprove, 
   onReject,
-  currentUser 
+  currentUser,
+  checked = false,
+  onCheck
 }) => {
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -36,30 +38,29 @@ const AddressCard: React.FC<AddressCardProps> = ({
     }
   }
 
-  const getAddressTypeBadge = (addressType: string) => {
-    switch (addressType) {
-      case 'temporary':
-        return (
-          <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-orange-100 dark:bg-orange-900/20 text-orange-800 dark:text-orange-400 rounded-full">
-            <Timer className="w-3 h-3" />
-            Temporär
-          </span>
-        )
-      case 'permanent':
-        return (
-          <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-400 rounded-full">
-            <Database className="w-3 h-3" />
-            Permanent
-          </span>
-        )
-      default:
-        return (
-          <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-full">
-            <Database className="w-3 h-3" />
-            Unbekannt
-          </span>
-        )
+  const getAddressTypeBadge = () => {
+    if (address.isOfficial || address.stationId || address.type === 'station') {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-400 rounded-full">
+          <Building2 className="w-3 h-3" />
+          Station
+        </span>
+      )
     }
+    if (address.isTemporary || address.type === 'temporary') {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-orange-100 dark:bg-orange-900/20 text-orange-800 dark:text-orange-400 rounded-full">
+          <Timer className="w-3 h-3" />
+          Temporär
+        </span>
+      )
+    }
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400 rounded-full">
+        <User className="w-3 h-3" />
+        Nutzer
+      </span>
+    )
   }
 
   const getPraesidiumName = (parentId: string | undefined) => {
@@ -71,14 +72,28 @@ const AddressCard: React.FC<AddressCardProps> = ({
   // Berechtigungsprüfung für moderne React-Patterns
   const isOwner = address.userId === currentUser?.id
   const isAdmin = currentUser?.role === 'admin'
-  const isTemporary = address.addressType === 'temporary'
+  const isTemporary = address.isTemporary || address.type === 'temporary'
+  const isStationAddress = address.isOfficial || address.stationId || address.type === 'station'
+  
   const canEdit = isTemporary || isOwner || isAdmin
-  const canDelete = isTemporary || isOwner || isAdmin
+  const canDelete = (isTemporary || isOwner || isAdmin) && !isStationAddress // Stationen-Adressen können nicht gelöscht werden
   const canApprove = isAdmin && address.reviewStatus === 'pending'
   const canReject = isAdmin && address.reviewStatus === 'pending'
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all duration-200 flex flex-col h-full">
+    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all duration-200 flex flex-col h-full relative overflow-visible">
+      {/* Checkbox für Mehrfachauswahl */}
+      {onCheck && (
+        <div className="absolute -top-3 -left-3 z-20">
+          <input
+            type="checkbox"
+            checked={checked}
+            onChange={e => onCheck(address.id, e.target.checked)}
+            className="w-6 h-6 rounded-full border-2 border-gray-300 bg-white dark:bg-gray-900 shadow-lg focus:ring-2 focus:ring-indigo-500 transition-all duration-150 hover:border-indigo-400 cursor-pointer"
+            style={{ boxShadow: '0 2px 8px 0 rgba(0,0,0,0.10)' }}
+          />
+        </div>
+      )}
       <div className="p-6 flex flex-col gap-4 flex-1">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2">
           <div className="flex items-start gap-3">
@@ -96,7 +111,7 @@ const AddressCard: React.FC<AddressCardProps> = ({
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             {getStatusBadge(address.reviewStatus)}
-            {getAddressTypeBadge(address.addressType || 'permanent')}
+            {getAddressTypeBadge()}
             {!address.isActive && (
               <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-full">
                 Inaktiv

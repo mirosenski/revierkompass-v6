@@ -8,7 +8,8 @@ const AddressFilters: React.FC<AddressFiltersProps> = ({
   onClearFilters,
   allCities,
   hasActiveFilters,
-  filteredAddressesCount
+  filteredAddressesCount,
+  activeTab
 }) => {
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
@@ -43,19 +44,21 @@ const AddressFilters: React.FC<AddressFiltersProps> = ({
           </select>
         </div>
 
-        {/* Status Filter */}
-        <div className="w-full lg:w-48">
-          <select
-            value={filters.status}
-            onChange={(e) => onFilterChange('status', e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-          >
-            <option key="all" value="all">Alle Status</option>
-            <option key="pending" value="pending">Ausstehend</option>
-            <option key="approved" value="approved">Genehmigt</option>
-            <option key="rejected" value="rejected">Abgelehnt</option>
-          </select>
-        </div>
+        {/* Status Filter - nur für Nutzer-Adressen */}
+        {activeTab === 'user' && (
+          <div className="w-full lg:w-48">
+            <select
+              value={filters.status}
+              onChange={(e) => onFilterChange('status', e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            >
+              <option key="all" value="all">Alle Status</option>
+              <option key="pending" value="pending">Ausstehend</option>
+              <option key="approved" value="approved">Genehmigt</option>
+              <option key="rejected" value="rejected">Abgelehnt</option>
+            </select>
+          </div>
+        )}
 
         {/* Clear Filters */}
         {hasActiveFilters && (
@@ -90,7 +93,7 @@ const AddressFilters: React.FC<AddressFiltersProps> = ({
                   Stadt: {filters.city}
                 </span>
               )}
-              {filters.status !== 'all' && (
+              {activeTab === 'user' && filters.status !== 'all' && (
                 <span className="px-2 py-1 bg-indigo-100 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 rounded">
                   Status: {filters.status}
                 </span>

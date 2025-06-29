@@ -19,6 +19,10 @@ export interface Address {
     email: string
   }
   parentId?: string
+  isOfficial?: boolean
+  stationId?: string
+  type?: 'station' | 'address' | 'custom' | 'temporary'
+  isTemporary?: boolean
 }
 
 export interface CreateAddressData {
@@ -56,7 +60,14 @@ export const adminAddressService = {
         reviewStatus: station.reviewStatus || 'pending',
         createdAt: station.lastModified,
         user: station.user,
-        parentId: station.parentId
+        parentId: station.parentId,
+        // Neue Felder für Tab-Filterung
+        isOfficial: station.type === 'praesidium' || station.type === 'revier',
+        stationId: station.parentId || null,
+        type: station.type === 'praesidium' || station.type === 'revier' ? 'station' : 
+              station.type === 'address' ? 'address' : 
+              station.type === 'custom' ? 'custom' : 'temporary',
+        isTemporary: station.type === 'temporary' || station.isTemporary || false
       }))
     } catch (error) {
       console.error('Fehler beim Laden der Adressen:', error)

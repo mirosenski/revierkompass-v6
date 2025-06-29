@@ -146,7 +146,38 @@ app.delete('/api/stationen', async (req, res) => {
 
 // ===== ADDRESS ROUTES =====
 
-// POST /api/addresses/anonymous - Create anonymous address for review
+// POST /api/addresses - Create any address (temporary or permanent)
+app.post('/api/addresses', async (req, res) => {
+  try {
+    const addressData = {
+      ...req.body,
+      userId: req.body.userId || null,
+      isAnonymous: req.body.isAnonymous || false,
+      reviewStatus: req.body.reviewStatus || 'pending',
+      addressType: req.body.addressType || 'permanent',
+      parentId: req.body.parentId || null,
+      coordinates: req.body.coordinates ? JSON.stringify(req.body.coordinates) : null,
+      isActive: true
+    };
+
+    const address = await prisma.customAddress.create({
+      data: addressData,
+    });
+
+    res.status(201).json({
+      message: 'Adresse erfolgreich erstellt',
+      address: {
+        ...address,
+        coordinates: address.coordinates ? JSON.parse(address.coordinates) : null
+      }
+    });
+  } catch (error) {
+    console.error('Create address error:', error);
+    res.status(500).json({ error: 'Fehler beim Erstellen der Adresse' });
+  }
+});
+
+// POST /api/addresses/anonymous - Create anonymous address for review (Legacy)
 app.post('/api/addresses/anonymous', async (req, res) => {
   try {
     const addressData = {
@@ -178,62 +209,218 @@ app.post('/api/addresses/anonymous', async (req, res) => {
   }
 });
 
-// PUT /api/addresses/anonymous/:id - Update anonymous address
-app.put('/api/addresses/anonymous/:id', async (req, res) => {
+// GET /api/addresses/stats - Get address statistics
+app.get('/api/addresses/stats', async (req, res) => {
   try {
-    const { id } = req.params;
-    
-    const address = await prisma.customAddress.update({
-      where: { id },
-      data: {
-        ...req.body,
-        coordinates: req.body.coordinates ? JSON.stringify(req.body.coordinates) : null
-      },
-    });
+    const total = await prisma.customAddress.count({ where: { isActive: true } });
+    const pending = await prisma.customAddress.count({ where: { reviewStatus: 'pending', isActive: true } });
+    const approved = await prisma.customAddress.count({ where: { reviewStatus: 'approved', isActive: true } });
+    const rejected = await prisma.customAddress.count({ where: { reviewStatus: 'rejected' } });
+    const temporary = await prisma.customAddress.count({ where: { addressType: 'temporary', isActive: true } });
+    const permanent = await prisma.customAddress.count({ where: { addressType: 'permanent', isActive: true } });
 
     res.json({
-      message: 'Adresse erfolgreich aktualisiert',
-      address,
+      total,
+      pending,
+      approved,
+      rejected,
+      temporary,
+      permanent,
+      byStatus: { pending, approved, rejected },
+      byType: { temporary, permanent }
     });
   } catch (error) {
-    console.error('Update anonymous address error:', error);
-    res.status(500).json({ error: 'Fehler beim Aktualisieren der Adresse' });
-  }
-});
-
-// DELETE /api/addresses/anonymous/:id - Delete anonymous address
-app.delete('/api/addresses/anonymous/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    // Soft delete
-    const address = await prisma.customAddress.update({
-      where: { id },
-      data: { isActive: false },
-    });
-
-    res.json({
-      message: 'Adresse erfolgreich gelöscht',
-      address,
-    });
-  } catch (error) {
-    console.error('Delete anonymous address error:', error);
-    res.status(500).json({ error: 'Fehler beim Löschen der Adresse' });
+    console.error('Get address stats error:', error);
+    res.status(500).json({ error: 'Fehler beim Laden der Adress-Statistiken' });
   }
 });
 
 // GET /api/addresses - Get all addresses (for admin)
 app.get('/api/addresses', async (req, res) => {
   try {
+    const { status, type, limit = 50, offset = 0 } = req.query;
+    
+    const where = { isActive: true };
+    
+    if (status) {
+      where.reviewStatus = status;
+    }
+    
+    if (type) {
+      where.addressType = type;
+    }
+
     const addresses = await prisma.customAddress.findMany({
-      where: { isActive: true },
+      where,
       orderBy: { createdAt: 'desc' },
+      take: parseInt(limit),
+      skip: parseInt(offset),
+      include: {
+        parent: {
+          select: {
+            id: true,
+            name: true,
+            city: true
+          }
+        }
+      }
     });
     
-    res.json(addresses);
+    // Koordinaten von JSON-String zu Array konvertieren
+    const processedAddresses = addresses.map(address => ({
+      ...address,
+      coordinates: address.coordinates ? JSON.parse(address.coordinates) : null
+    }));
+    
+    res.json(processedAddresses);
   } catch (error) {
     console.error('Get addresses error:', error);
     res.status(500).json({ error: 'Fehler beim Laden der Adressen' });
+  }
+});
+
+// GET /api/addresses/:id - Get specific address
+app.get('/api/addresses/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const address = await prisma.customAddress.findUnique({
+      where: { id },
+      include: {
+        parent: {
+          select: {
+            id: true,
+            name: true,
+            city: true
+          }
+        }
+      }
+    });
+
+    if (!address) {
+      return res.status(404).json({ error: 'Adresse nicht gefunden' });
+    }
+
+    const processedAddress = {
+      ...address,
+      coordinates: address.coordinates ? JSON.parse(address.coordinates) : null
+    };
+
+    res.json(processedAddress);
+  } catch (error) {
+    console.error('Get address error:', error);
+    res.status(500).json({ error: 'Fehler beim Laden der Adresse' });
+  }
+});
+
+// PUT /api/addresses/:id - Update address
+app.put('/api/addresses/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const updateData = {
+      ...req.body,
+      coordinates: req.body.coordinates ? JSON.stringify(req.body.coordinates) : null
+    };
+
+    const address = await prisma.customAddress.update({
+      where: { id },
+      data: updateData,
+      include: {
+        parent: {
+          select: {
+            id: true,
+            name: true,
+            city: true
+          }
+        }
+      }
+    });
+
+    const processedAddress = {
+      ...address,
+      coordinates: address.coordinates ? JSON.parse(address.coordinates) : null
+    };
+
+    res.json({
+      message: 'Adresse erfolgreich aktualisiert',
+      address: processedAddress,
+    });
+  } catch (error) {
+    console.error('Update address error:', error);
+    res.status(500).json({ error: 'Fehler beim Aktualisieren der Adresse' });
+  }
+});
+
+// PUT /api/addresses/:id/review - Admin review action
+app.put('/api/addresses/:id/review', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { action, reviewNotes, reviewedBy } = req.body;
+    
+    let updateData = {
+      reviewedBy: reviewedBy || 'admin',
+      reviewedAt: new Date()
+    };
+
+    switch (action) {
+      case 'approve':
+        updateData.reviewStatus = 'approved';
+        updateData.isVerified = true;
+        break;
+      case 'reject':
+        updateData.reviewStatus = 'rejected';
+        updateData.isActive = false;
+        break;
+      case 'archive':
+        updateData.isActive = false;
+        break;
+      default:
+        return res.status(400).json({ error: 'Ungültige Aktion' });
+    }
+
+    if (reviewNotes) {
+      updateData.reviewNotes = reviewNotes;
+    }
+
+    const address = await prisma.customAddress.update({
+      where: { id },
+      data: updateData,
+      include: {
+        parent: {
+          select: {
+            id: true,
+            name: true,
+            city: true
+          }
+        }
+      }
+    });
+
+    const processedAddress = {
+      ...address,
+      coordinates: address.coordinates ? JSON.parse(address.coordinates) : null
+    };
+
+    res.json({
+      message: `Adresse erfolgreich ${action === 'approve' ? 'genehmigt' : action === 'reject' ? 'abgelehnt' : 'archiviert'}`,
+      address: processedAddress,
+    });
+  } catch (error) {
+    console.error('Review address error:', error);
+    res.status(500).json({ error: 'Fehler bei der Adress-Überprüfung' });
+  }
+});
+
+// DELETE /api/addresses/:id - Delete address (hard delete)
+app.delete('/api/addresses/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.customAddress.delete({ where: { id } });
+    res.json({ message: 'Adresse vollständig gelöscht' });
+  } catch (error) {
+    console.error('Delete address error:', error);
+    res.status(500).json({ error: 'Fehler beim Löschen der Adresse' });
   }
 });
 

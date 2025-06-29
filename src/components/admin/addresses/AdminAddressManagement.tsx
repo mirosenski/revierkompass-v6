@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
-import { Plus, MapPin, AlertTriangle, Database } from 'lucide-react'
+import { Plus, MapPin, AlertTriangle, Database, Edit2, Trash2, CheckCircle, XCircle, Clock, BarChart3, Building2, Users, Clock3 } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import { useAdminStore } from '@/lib/store/admin-store'
 import adminAddressService, { Address, CreateAddressData, UpdateAddressData } from '@/services/api/admin-address.service'
@@ -8,14 +8,18 @@ import { AddressFilterState } from './types'
 import AddressCard from './AddressCard'
 import AddressModal from './AddressModal'
 import AddressFilters from './AddressFilters'
+import { motion } from 'framer-motion'
+
+type AddressTab = 'station' | 'user' | 'temporary'
 
 // ===== MAIN COMPONENT =====
 const AdminAddressManagement: React.FC = () => {
   const { allStations } = useAdminStore()
   const [addresses, setAddresses] = useState<Address[]>([])
   const [filteredAddresses, setFilteredAddresses] = useState<Address[]>([])
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<AddressTab>('user')
 
   const [filters, setFilters] = useState<AddressFilterState>({
     search: '',
@@ -26,15 +30,38 @@ const AdminAddressManagement: React.FC = () => {
 
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingAddress, setEditingAddress] = useState<Address | null>(null)
+  const [stats, setStats] = useState<any>(null)
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
 
   // Load addresses on mount
   useEffect(() => {
     loadAddresses()
+    loadStats()
   }, [])
 
-  // Filter addresses based on filters
+  // Filter addresses based on active tab and filters
   useEffect(() => {
     let filtered = addresses
+
+    // Filter by address type based on active tab
+    switch (activeTab) {
+      case 'station':
+        // Station addresses: addresses that are linked to stations or are official
+        filtered = filtered.filter(addr => 
+          addr.isOfficial || addr.stationId || addr.type === 'station'
+        )
+        break
+      case 'user':
+        // User addresses: addresses pending approval or created by users
+        filtered = filtered.filter(addr => 
+          !addr.isOfficial && !addr.stationId && addr.type !== 'station' && !addr.isTemporary
+        )
+        break
+      case 'temporary':
+        // Temporary addresses: session-only addresses
+        filtered = filtered.filter(addr => addr.isTemporary)
+        break
+    }
 
     // Search filter
     if (filters.search) {
@@ -52,8 +79,8 @@ const AdminAddressManagement: React.FC = () => {
       filtered = filtered.filter(addr => addr.city === filters.city)
     }
 
-    // Status filter
-    if (filters.status !== 'all') {
+    // Status filter (only for user addresses)
+    if (activeTab === 'user' && filters.status !== 'all') {
       filtered = filtered.filter(addr => addr.reviewStatus === filters.status)
     }
 
@@ -63,7 +90,7 @@ const AdminAddressManagement: React.FC = () => {
     }
 
     setFilteredAddresses(filtered)
-  }, [addresses, filters])
+  }, [addresses, filters, activeTab])
 
   const loadAddresses = async () => {
     setIsLoading(true)
@@ -77,6 +104,18 @@ const AdminAddressManagement: React.FC = () => {
       setError('Fehler beim Laden der Adressen')
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const loadStats = async () => {
+    try {
+      const response = await fetch('/api/addresses/stats')
+      if (response.ok) {
+        const data = await response.json()
+        setStats(data)
+      }
+    } catch (error) {
+      console.error('Fehler beim Laden der Statistiken:', error)
     }
   }
 
@@ -105,6 +144,16 @@ const AdminAddressManagement: React.FC = () => {
   }
 
   const handleDelete = async (id: string) => {
+    const address = addresses.find(addr => addr.id === id)
+    
+    // Stationen-Adressen können nicht gelöscht werden
+    if (address && (address.isOfficial || address.stationId || address.type === 'station')) {
+      toast.error('Stationen-Adressen können nicht gelöscht werden. Bearbeiten Sie diese über den Bereich "Stationen".')
+      return
+    }
+    
+    if (!confirm('Möchten Sie diese Adresse wirklich löschen?')) return
+
     try {
       await adminAddressService.deleteAddress(id)
       toast.success('Adresse erfolgreich gelöscht')
@@ -196,6 +245,60 @@ const AdminAddressManagement: React.FC = () => {
     }
   }, [loadAddresses]);
 
+  // Checkbox-Logik
+  const isAllSelected = filteredAddresses.length > 0 && filteredAddresses.every(addr => selectedIds.includes(addr.id))
+  const isSomeSelected = selectedIds.length > 0 && !isAllSelected
+
+  const handleCheck = (id: string, checked: boolean) => {
+    setSelectedIds(prev => checked ? [...prev, id] : prev.filter(sel => sel !== id))
+  }
+
+  const handleCheckAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedIds(filteredAddresses.map(addr => addr.id))
+    } else {
+      setSelectedIds([])
+    }
+  }
+
+  const handleDeleteSelected = async () => {
+    if (selectedIds.length === 0) return
+    
+    // Filtere Stationen-Adressen aus der Auswahl
+    const deletableIds = selectedIds.filter(id => {
+      const address = addresses.find(addr => addr.id === id)
+      return !address || !(address.isOfficial || address.stationId || address.type === 'station')
+    })
+    
+    const nonDeletableCount = selectedIds.length - deletableIds.length
+    
+    if (deletableIds.length === 0) {
+      toast.error('Keine löschbaren Adressen ausgewählt. Stationen-Adressen können nicht gelöscht werden.')
+      return
+    }
+    
+    let confirmMessage = `Möchten Sie wirklich ${deletableIds.length} Adressen unwiderruflich löschen?`
+    if (nonDeletableCount > 0) {
+      confirmMessage += `\n\n${nonDeletableCount} Stationen-Adressen wurden von der Löschung ausgeschlossen.`
+    }
+    
+    if (!confirm(confirmMessage)) return
+    
+    try {
+      for (const id of deletableIds) {
+        await adminAddressService.deleteAddress(id)
+      }
+      toast.success(`${deletableIds.length} Adressen gelöscht`)
+      if (nonDeletableCount > 0) {
+        toast.error(`${nonDeletableCount} Stationen-Adressen wurden nicht gelöscht`)
+      }
+      setSelectedIds([])
+      await loadAddresses()
+    } catch (err) {
+      toast.error('Fehler beim Massenlöschen')
+    }
+  }
+
   // Loading State
   if (isLoading && addresses.length === 0) {
     return (
@@ -273,6 +376,58 @@ const AdminAddressManagement: React.FC = () => {
 
       {/* Advanced Filters */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Tab Navigation */}
+        <div className="mb-6">
+          <div className="border-b border-gray-200 dark:border-gray-700">
+            <nav className="-mb-px flex space-x-8">
+              <button
+                onClick={() => setActiveTab('user')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors ${
+                  activeTab === 'user'
+                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                }`}
+              >
+                <Users className="w-4 h-4" />
+                Nutzer-Adressen
+                <span className="ml-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 py-0.5 px-2 rounded-full text-xs">
+                  {addresses.filter(addr => !addr.isOfficial && !addr.stationId && addr.type !== 'station' && !addr.isTemporary).length}
+                </span>
+              </button>
+              
+              <button
+                onClick={() => setActiveTab('station')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors ${
+                  activeTab === 'station'
+                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                }`}
+              >
+                <Building2 className="w-4 h-4" />
+                Stationen-Adressen
+                <span className="ml-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 py-0.5 px-2 rounded-full text-xs">
+                  {addresses.filter(addr => addr.isOfficial || addr.stationId || addr.type === 'station').length}
+                </span>
+              </button>
+              
+              <button
+                onClick={() => setActiveTab('temporary')}
+                className={`py-2 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors ${
+                  activeTab === 'temporary'
+                    ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                }`}
+              >
+                <Clock3 className="w-4 h-4" />
+                Temporäre Adressen
+                <span className="ml-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 py-0.5 px-2 rounded-full text-xs">
+                  {addresses.filter(addr => addr.isTemporary).length}
+                </span>
+              </button>
+            </nav>
+          </div>
+        </div>
+
         <AddressFilters
           filters={filters}
           onFilterChange={handleFilterChange}
@@ -280,11 +435,30 @@ const AdminAddressManagement: React.FC = () => {
           allCities={allCities}
           hasActiveFilters={hasActiveFilters}
           filteredAddressesCount={filteredAddresses.length}
+          activeTab={activeTab}
         />
       </div>
 
       {/* Address Cards */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
+        <div className="flex items-center gap-4 mb-4">
+          <input
+            type="checkbox"
+            checked={isAllSelected}
+            ref={el => { if (el) el.indeterminate = isSomeSelected }}
+            onChange={e => handleCheckAll(e.target.checked)}
+            className="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 shadow"
+          />
+          <span className="text-sm text-gray-700 dark:text-gray-300 select-none">Alle auswählen</span>
+          {selectedIds.length > 0 && (
+            <button
+              onClick={handleDeleteSelected}
+              className="ml-4 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium shadow transition-colors"
+            >
+              {selectedIds.length === 1 ? 'Ausgewählte Adresse löschen' : `${selectedIds.length} Adressen löschen`}
+            </button>
+          )}
+        </div>
         {addresses.length === 0 ? (
           <div className="text-center py-12">
             <div className="bg-gray-100 dark:bg-gray-800 rounded-full p-4 w-20 h-20 mx-auto mb-4">
@@ -315,7 +489,7 @@ const AdminAddressManagement: React.FC = () => {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredAddresses.map((address) => (
               <div key={address.id} className="animate-in fade-in-50 duration-200">
                 <AddressCard
@@ -324,6 +498,8 @@ const AdminAddressManagement: React.FC = () => {
                   onDelete={handleDelete}
                   onApprove={handleApprove}
                   onReject={handleReject}
+                  checked={selectedIds.includes(address.id)}
+                  onCheck={handleCheck}
                 />
               </div>
             ))}
