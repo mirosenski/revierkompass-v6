@@ -54,4 +54,6 @@ export interface FormData {
   street: string;
   zipCode: string;
   city: string;
+  addressType: 'temporary' | 'permanent';
+  parentId?: string; // Für permanente Adressen: Zugehörigkeit zu Präsidium
 } 

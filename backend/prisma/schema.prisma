@@ -25,3 +25,24 @@ model PoliceStation {
   lastModified DateTime @default(now()) @updatedAt
 }
 
+model CustomAddress {
+  id            String   @id @default(cuid())
+  name          String
+  street        String
+  zipCode       String
+  city          String
+  coordinates   String?  // JSON string: "[lat, lng]"
+  isVerified    Boolean  @default(false)
+  isActive      Boolean  @default(true)
+  isAnonymous   Boolean  @default(false)
+  reviewStatus  String   @default("pending") // "pending", "approved", "rejected"
+  reviewNotes   String?
+  reviewedBy    String?
+  reviewedAt    DateTime?
+  parentId      String?  // Reference to PoliceStation (Praesidium)
+  userId        String?  // Reference to user who created it
+  addressType   String   @default("permanent") // "temporary", "permanent"
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+

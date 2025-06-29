@@ -17,7 +17,9 @@ export const useStep2Logic = () => {
     name: '',
     street: '',
     zipCode: '',
-    city: ''
+    city: '',
+    addressType: 'temporary' as 'temporary' | 'permanent',
+    parentId: undefined as string | undefined
   });
 
   // Routing state
@@ -423,31 +425,127 @@ export const useStep2Logic = () => {
   };
 
   // Add Custom Address
-  const handleAddAddress = () => {
+  const handleAddAddress = async () => {
     if (!formData.name.trim() || !formData.street.trim() || !formData.zipCode.trim() || !formData.city.trim()) {
       toast.error('Bitte füllen Sie alle Felder aus');
       return;
     }
 
-    addCustomAddress({
-      name: formData.name,
-      street: formData.street,
-      zipCode: formData.zipCode,
-      city: formData.city
-    });
-    
-    setFormData({ name: '', street: '', zipCode: '', city: '' });
-    setShowAddForm(false);
-    toast.success('Adresse erfolgreich hinzugefügt');
-    announceToScreenReader('Neue Adresse hinzugefügt');
+    try {
+      if (formData.addressType === 'temporary') {
+        // Temporäre Adresse: Nur lokal speichern
+        addCustomAddress({
+          name: formData.name,
+          street: formData.street,
+          zipCode: formData.zipCode,
+          city: formData.city,
+          addressType: 'temporary'
+        });
+        
+        toast.success('Temporäre Adresse hinzugefügt');
+        announceToScreenReader('Temporäre Adresse hinzugefügt');
+      } else {
+        // Permanente Adresse: An Backend senden zur Überprüfung
+        const response = await fetch('/api/addresses/anonymous', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: formData.name,
+            street: formData.street,
+            zipCode: formData.zipCode,
+            city: formData.city,
+            coordinates: [48.7758, 9.1829], // Default Stuttgart coordinates
+            parentId: formData.parentId || null,
+            addressType: 'permanent'
+          }),
+        });
+
+        if (!response.ok) {
+          throw new Error('Fehler beim Einreichen der Adresse');
+        }
+
+        const result = await response.json();
+        
+        toast.success('Adresse zur Überprüfung eingereicht');
+        announceToScreenReader('Adresse zur Überprüfung eingereicht');
+        
+        // Lokal hinzufügen mit Backend-ID für spätere Bearbeitung
+        addCustomAddress({
+          name: formData.name,
+          street: formData.street,
+          zipCode: formData.zipCode,
+          city: formData.city,
+          addressType: 'permanent',
+          backendId: result.address.id,
+          parentId: formData.parentId
+        });
+      }
+      
+      setFormData({ name: '', street: '', zipCode: '', city: '', addressType: 'temporary', parentId: undefined });
+      setShowAddForm(false);
+    } catch (error) {
+      console.error('Fehler beim Hinzufügen der Adresse:', error);
+      toast.error('Fehler beim Hinzufügen der Adresse');
+    }
   };
 
   // Delete Custom Address
-  const handleDeleteAddress = (addressId: string) => {
-    deleteCustomAddress(addressId);
-    const updated = selectedCustomAddresses.filter(id => id !== addressId);
+  const handleDeleteAddress = async (addressId: string) => {
+    try {
+      // Prüfen ob es eine permanente Adresse ist (hat Backend-ID)
+      const address = customAddresses.find(addr => addr.id === addressId);
+      if (address && address.backendId) {
+        // Permanente Adresse: Backend-API aufrufen
+        const response = await fetch(`/api/addresses/anonymous/${address.backendId}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Fehler beim Löschen der Adresse');
+        }
+        
+        toast.success('Permanente Adresse gelöscht');
+      } else {
+        // Temporäre Adresse: Nur lokal löschen
+        toast.success('Temporäre Adresse gelöscht');
+      }
+      
+      // Lokal löschen
+      deleteCustomAddress(addressId);
+      const updated = selectedCustomAddresses.filter(id => id !== addressId);
+      setSelectedCustomAddresses(updated);
+    } catch (error) {
+      console.error('Fehler beim Löschen der Adresse:', error);
+      toast.error('Fehler beim Löschen der Adresse');
+    }
+  };
+
+  // Edit Custom Address
+  const handleEditAddress = (address: any) => {
+    // Formular mit Adress-Daten füllen
+    setFormData({
+      name: address.name,
+      street: address.street,
+      zipCode: address.zipCode,
+      city: address.city,
+      addressType: address.addressType || 'temporary',
+      parentId: address.parentId || undefined
+    });
+    
+    // Bearbeitungsmodus aktivieren
+    setShowAddForm(true);
+    
+    // Adresse aus der Liste entfernen (wird durch neue ersetzt)
+    deleteCustomAddress(address.id);
+    const updated = selectedCustomAddresses.filter(id => id !== address.id);
     setSelectedCustomAddresses(updated);
-    toast.success('Adresse gelöscht');
+    
+    toast.success('Adresse zum Bearbeiten geöffnet');
   };
 
   // Voice Commands
@@ -536,6 +634,7 @@ export const useStep2Logic = () => {
     handleCustomToggle,
     handleAddAddress,
     handleDeleteAddress,
+    handleEditAddress,
     handleContinue,
     announceToScreenReader,
     handleVoiceCommand,

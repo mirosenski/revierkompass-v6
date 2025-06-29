@@ -1,5 +1,5 @@
 import React from 'react'
-import { MapPin, Edit2, Trash2, Check, X, Clock, User, Building2 } from 'lucide-react'
+import { MapPin, Edit2, Trash2, Check, X, Clock, User, Building2, Database, Timer } from 'lucide-react'
 import { AddressCardProps } from './types'
 
 const AddressCard: React.FC<AddressCardProps> = ({ 
@@ -35,6 +35,32 @@ const AddressCard: React.FC<AddressCardProps> = ({
     }
   }
 
+  const getAddressTypeBadge = (addressType: string) => {
+    switch (addressType) {
+      case 'temporary':
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-orange-100 dark:bg-orange-900/20 text-orange-800 dark:text-orange-400 rounded-full">
+            <Timer className="w-3 h-3" />
+            Temporär
+          </span>
+        )
+      case 'permanent':
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-400 rounded-full">
+            <Database className="w-3 h-3" />
+            Permanent
+          </span>
+        )
+      default:
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-full">
+            <Database className="w-3 h-3" />
+            Unbekannt
+          </span>
+        )
+    }
+  }
+
   const getPraesidiumName = (parentId: string | undefined) => {
     if (!parentId) return 'Kein Präsidium zugeordnet'
     // Hier würde normalerweise die Präsidium-Name-Logik stehen
@@ -60,6 +86,7 @@ const AddressCard: React.FC<AddressCardProps> = ({
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             {getStatusBadge(address.reviewStatus)}
+            {getAddressTypeBadge(address.addressType || 'permanent')}
             {!address.isActive && (
               <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-full">
                 Inaktiv
@@ -74,7 +101,7 @@ const AddressCard: React.FC<AddressCardProps> = ({
               Koordinaten
             </p>
             <p className="text-sm text-gray-700 dark:text-gray-300">
-              {address.coordinates[0]?.toFixed(4)}, {address.coordinates[1]?.toFixed(4)}
+              {address.coordinates?.[0]?.toFixed(4) || 'N/A'}, {address.coordinates?.[1]?.toFixed(4) || 'N/A'}
             </p>
           </div>
           <div>
@@ -93,6 +120,12 @@ const AddressCard: React.FC<AddressCardProps> = ({
               <span className="flex items-center gap-1">
                 <Check className="w-4 h-4 text-green-500" />
                 Verifiziert
+              </span>
+            )}
+            {address.isAnonymous && (
+              <span className="flex items-center gap-1">
+                <User className="w-4 h-4 text-orange-500" />
+                Anonym
               </span>
             )}
             <span className="flex items-center gap-1">

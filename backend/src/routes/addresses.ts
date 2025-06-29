@@ -145,6 +145,8 @@ router.post('/anonymous',
         userId: null,
         isAnonymous: true,
         reviewStatus: 'pending',
+        addressType: req.body.addressType || 'permanent',
+        parentId: req.body.parentId || null,
       };
 
       const address = await prisma.customAddress.create({
@@ -157,6 +159,7 @@ router.post('/anonymous',
           id: address.id,
           name: address.name,
           reviewStatus: address.reviewStatus,
+          addressType: address.addressType,
         },
       });
     } catch (error) {
@@ -410,5 +413,94 @@ router.get('/admin/stats', authenticateToken, requireAdmin, async (req, res) => 
     res.status(500).json({ error: 'Fehler beim Laden der Adress-Statistiken' });
   }
 });
+
+// PUT /api/addresses/anonymous/:id - Update anonymous address (no auth required)
+router.put('/anonymous/:id', 
+  createLimiter,
+  validate(updateAddressSchema),
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { sessionId } = req.body; // Session-ID für anonyme Benutzer
+
+      // Check if address exists and is anonymous
+      const existingAddress = await prisma.customAddress.findUnique({
+        where: { id },
+      });
+
+      if (!existingAddress) {
+        return res.status(404).json({ error: 'Adresse nicht gefunden' });
+      }
+
+      if (!existingAddress.isAnonymous) {
+        return res.status(403).json({ error: 'Nur anonyme Adressen können bearbeitet werden' });
+      }
+
+      // Optional: Session-ID Validierung für zusätzliche Sicherheit
+      // if (sessionId && existingAddress.sessionId !== sessionId) {
+      //   return res.status(403).json({ error: 'Keine Berechtigung für diese Adresse' });
+      // }
+
+      const address = await prisma.customAddress.update({
+        where: { id },
+        data: {
+          ...req.body,
+          updatedAt: new Date(),
+        },
+      });
+
+      res.json({
+        message: 'Adresse erfolgreich aktualisiert',
+        address,
+      });
+    } catch (error) {
+      console.error('Update anonymous address error:', error);
+      res.status(500).json({ error: 'Fehler beim Aktualisieren der Adresse' });
+    }
+  }
+);
+
+// DELETE /api/addresses/anonymous/:id - Delete anonymous address (no auth required)
+router.delete('/anonymous/:id', 
+  createLimiter,
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { sessionId } = req.body; // Session-ID für anonyme Benutzer
+
+      // Check if address exists and is anonymous
+      const existingAddress = await prisma.customAddress.findUnique({
+        where: { id },
+      });
+
+      if (!existingAddress) {
+        return res.status(404).json({ error: 'Adresse nicht gefunden' });
+      }
+
+      if (!existingAddress.isAnonymous) {
+        return res.status(403).json({ error: 'Nur anonyme Adressen können gelöscht werden' });
+      }
+
+      // Optional: Session-ID Validierung für zusätzliche Sicherheit
+      // if (sessionId && existingAddress.sessionId !== sessionId) {
+      //   return res.status(403).json({ error: 'Keine Berechtigung für diese Adresse' });
+      // }
+
+      // Soft delete
+      const address = await prisma.customAddress.update({
+        where: { id },
+        data: { isActive: false },
+      });
+
+      res.json({
+        message: 'Adresse erfolgreich gelöscht',
+        address,
+      });
+    } catch (error) {
+      console.error('Delete anonymous address error:', error);
+      res.status(500).json({ error: 'Fehler beim Löschen der Adresse' });
+    }
+  }
+);
 
 export default router;

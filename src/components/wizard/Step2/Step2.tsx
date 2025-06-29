@@ -90,6 +90,7 @@ const Step2: React.FC = () => {
     handleCustomToggle,
     handleAddAddress,
     handleDeleteAddress,
+    handleEditAddress,
     handleContinue,
     announceToScreenReader
   } = useStep2Logic();
@@ -281,6 +282,13 @@ const Step2: React.FC = () => {
   );
   const selectedCustomCount = selectedCustomAddresses.length;
 
+  // Verfügbare Präsidien für Adress-Formular
+  const availablePraesidien = praesidiumWithReviere.map(p => ({
+    id: p.id,
+    name: p.name,
+    city: p.city
+  }));
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       {/* Professionelle Status-Anzeige */}
@@ -441,12 +449,15 @@ const Step2: React.FC = () => {
             onStationToggle={handleStationToggle}
             onCustomToggle={handleCustomToggle}
             onAddAddress={handleAddAddress}
+            onDeleteAddress={handleDeleteAddress}
+            onEditAddress={handleEditAddress}
             onCancelAddForm={() => {
               setShowAddForm(false);
-              setFormData({ name: '', street: '', zipCode: '', city: '' });
+              setFormData({ name: '', street: '', zipCode: '', city: '', addressType: 'temporary', parentId: undefined });
             }}
             onToggleAddForm={() => setShowAddForm(!showAddForm)}
             onMarkerClick={handleMarkerClick}
+            availablePraesidien={availablePraesidien}
           />
         </div>
       </motion.div>

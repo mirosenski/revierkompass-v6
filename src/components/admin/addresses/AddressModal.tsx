@@ -21,6 +21,7 @@ const AddressModal: React.FC<AddressModalProps> = ({
     isActive: true,
     reviewStatus: 'pending' as 'pending' | 'approved' | 'rejected',
     parentId: '' as string,
+    addressType: 'permanent' as 'temporary' | 'permanent',
   })
 
   const [errors, setErrors] = useState<Record<string, string>>({})
@@ -37,6 +38,7 @@ const AddressModal: React.FC<AddressModalProps> = ({
         isActive: address.isActive !== false,
         reviewStatus: address.reviewStatus || 'pending',
         parentId: (address as any).parentId || '',
+        addressType: address.addressType || 'permanent',
       })
     } else if (!address && isOpen) {
       setFormData({
@@ -49,6 +51,7 @@ const AddressModal: React.FC<AddressModalProps> = ({
         isActive: true,
         reviewStatus: 'pending',
         parentId: '',
+        addressType: 'permanent',
       })
     }
   }, [address, isOpen])
@@ -199,6 +202,23 @@ const AddressModal: React.FC<AddressModalProps> = ({
                   <option value="pending">Ausstehend</option>
                   <option value="approved">Genehmigt</option>
                   <option value="rejected">Abgelehnt</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Adress-Typ
+                </label>
+                <select
+                  value={formData.addressType}
+                  onChange={(e) => setFormData(prev => ({ 
+                    ...prev, 
+                    addressType: e.target.value as 'temporary' | 'permanent'
+                  }))}
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                >
+                  <option value="temporary">Temporär</option>
+                  <option value="permanent">Permanent</option>
                 </select>
               </div>
 

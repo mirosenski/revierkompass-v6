@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Building, MapPin, Plus, CheckCircle2 } from 'lucide-react';
+import { Building, MapPin, Plus, CheckCircle2, Edit2, Trash2, Clock, Database } from 'lucide-react';
 import InteractiveMap from '@/components/map/InteractiveMap';
 import PraesidiumCard from './PraesidiumCard';
 import CustomAddressForm from './CustomAddressForm';
@@ -27,6 +27,9 @@ interface TabContentProps {
   onCancelAddForm: () => void;
   onToggleAddForm: () => void;
   onMarkerClick: (route: any) => void;
+  availablePraesidien?: Array<{ id: string; name: string; city: string }>;
+  onEditAddress?: (address: any) => void;
+  onDeleteAddress?: (addressId: string) => void;
 }
 
 const TabContent: React.FC<TabContentProps> = ({
@@ -49,7 +52,10 @@ const TabContent: React.FC<TabContentProps> = ({
   onAddAddress,
   onCancelAddForm,
   onToggleAddForm,
-  onMarkerClick
+  onMarkerClick,
+  availablePraesidien = [],
+  onEditAddress,
+  onDeleteAddress
 }) => {
   return (
     <AnimatePresence mode="wait">
@@ -227,6 +233,7 @@ const TabContent: React.FC<TabContentProps> = ({
             setFormData={setFormData}
             onAddAddress={onAddAddress}
             onCancel={onCancelAddForm}
+            availablePraesidien={availablePraesidien}
           />
 
           {/* Custom Addresses */}
@@ -253,35 +260,91 @@ const TabContent: React.FC<TabContentProps> = ({
                 return (
                   <motion.div
                     key={address.id}
-                    className={`address-card p-6 rounded-xl border transition-all duration-200 cursor-pointer hover:shadow-lg ${
+                    className={`address-card p-6 rounded-xl border transition-all duration-200 hover:shadow-lg ${
                       selectedCustomAddresses.includes(address.id) 
                         ? 'border-green-500 bg-green-50 dark:bg-green-900/20 shadow-md' 
                         : 'border-gray-200 dark:border-gray-600 hover:border-gray-300'
                     }`}
-                    onClick={() => onCustomToggle(address.id)}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                   >
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex items-center space-x-3">
-                        <MapPin className="h-6 w-6 text-green-600" />
-                        <div>
-                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                            {address.name}
-                          </h3>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
-                            {address.street}
-                          </p>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
-                            {address.zipCode} {address.city}
-                          </p>
+                    {/* Hauptinhalt - Klickbar für Auswahl */}
+                    <div 
+                      className="cursor-pointer"
+                      onClick={() => onCustomToggle(address.id)}
+                    >
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex items-center space-x-3">
+                          <MapPin className="h-6 w-6 text-green-600" />
+                          <div>
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                              {address.name}
+                            </h3>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              {address.street}
+                            </p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              {address.zipCode} {address.city}
+                            </p>
+                          </div>
                         </div>
+                        <CheckCircle2 className={`h-6 w-6 transition-colors ${
+                          selectedCustomAddresses.includes(address.id) 
+                            ? 'text-green-500' 
+                            : 'text-gray-300 dark:text-gray-600'
+                        }`} />
                       </div>
-                      <CheckCircle2 className={`h-6 w-6 transition-colors ${
-                        selectedCustomAddresses.includes(address.id) 
-                          ? 'text-green-500' 
-                          : 'text-gray-300 dark:text-gray-600'
-                      }`} />
+                    </div>
+
+                    {/* Adress-Typ Badge */}
+                    <div className="mb-3">
+                      {address.addressType === 'temporary' ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-orange-100 dark:bg-orange-900/20 text-orange-800 dark:text-orange-400 rounded-full">
+                          <Clock className="w-3 h-3" />
+                          Temporär
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-400 rounded-full">
+                          <Database className="w-3 h-3" />
+                          Permanent
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Aktions-Buttons */}
+                    <div className="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-700">
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        {address.addressType === 'temporary' 
+                          ? 'Nur für diese Sitzung' 
+                          : 'Zur Überprüfung eingereicht'
+                        }
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {onEditAddress && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onEditAddress(address);
+                            }}
+                            className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                            title="Bearbeiten"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                        )}
+                        {onDeleteAddress && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onDeleteAddress(address.id);
+                            }}
+                            className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                            title="Löschen"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </motion.div>
                 );

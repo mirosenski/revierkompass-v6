@@ -27,6 +27,9 @@ export interface CustomAddress {
   coordinates?: Coordinates;
   createdAt: Date;
   isSelected?: boolean;
+  backendId?: string; // ID im Backend für permanente Adressen
+  addressType?: 'temporary' | 'permanent';
+  parentId?: string; // Präsidium-Zuordnung
 }
 
 export interface Station {
@@ -183,7 +186,10 @@ export const useAppStore = create<AppState>()(
             address: `${address.street}, ${address.zipCode} ${address.city}`,
             id: `addr_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             createdAt: new Date(),
-            isSelected: false
+            isSelected: false,
+            addressType: address.addressType || 'temporary',
+            backendId: address.backendId,
+            parentId: address.parentId
           };
           const updatedAddresses = [...state.customAddresses, newAddress];
           return { customAddresses: updatedAddresses };
