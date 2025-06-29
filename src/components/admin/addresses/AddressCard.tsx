@@ -81,27 +81,28 @@ const AddressCard: React.FC<AddressCardProps> = ({
   const canReject = isAdmin && address.reviewStatus === 'pending'
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all duration-200 flex flex-col h-full relative overflow-visible">
-      {/* Checkbox für Mehrfachauswahl */}
+    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all duration-200 flex flex-col h-full relative">
+      {/* Checkbox für Mehrfachauswahl - jetzt innerhalb der Karte */}
       {onCheck && (
-        <div className="absolute -top-3 -left-3 z-20">
+        <div className="absolute top-4 left-4 z-20">
           <input
             type="checkbox"
             checked={checked}
             onChange={e => onCheck(address.id, e.target.checked)}
-            className="w-6 h-6 rounded-full border-2 border-gray-300 bg-white dark:bg-gray-900 shadow-lg focus:ring-2 focus:ring-indigo-500 transition-all duration-150 hover:border-indigo-400 cursor-pointer"
-            style={{ boxShadow: '0 2px 8px 0 rgba(0,0,0,0.10)' }}
+            className="w-5 h-5 rounded border-2 border-gray-300 bg-white dark:bg-gray-900 shadow-md focus:ring-2 focus:ring-indigo-500 transition-all duration-150 hover:border-indigo-400 cursor-pointer"
           />
         </div>
       )}
+      
       <div className="p-6 flex flex-col gap-4 flex-1">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2">
+        {/* Header-Bereich mit Icon, Name und Badges */}
+        <div className="flex flex-col gap-3">
           <div className="flex items-start gap-3">
-            <div className="bg-indigo-100 dark:bg-indigo-900/20 rounded-lg p-2 flex items-center justify-center">
-              <MapPin className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+            <div className="bg-indigo-100 dark:bg-indigo-900/20 rounded-lg p-2 flex items-center justify-center flex-shrink-0">
+              <MapPin className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
             </div>
-            <div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1 break-words">
+            <div className="flex-1 min-w-0">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1 break-words">
                 {address.name}
               </h3>
               <p className="text-gray-600 dark:text-gray-400 text-sm break-words">
@@ -109,7 +110,9 @@ const AddressCard: React.FC<AddressCardProps> = ({
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
+          
+          {/* Badges in einer flexiblen Zeile */}
+          <div className="flex flex-wrap items-center gap-2">
             {getStatusBadge(address.reviewStatus)}
             {getAddressTypeBadge()}
             {!address.isActive && (
@@ -120,9 +123,10 @@ const AddressCard: React.FC<AddressCardProps> = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
+        {/* Informationsbereich */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0.5 uppercase tracking-wide">
+            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wide">
               Koordinaten
             </p>
             <p className="text-sm text-gray-700 dark:text-gray-300">
@@ -130,7 +134,7 @@ const AddressCard: React.FC<AddressCardProps> = ({
             </p>
           </div>
           <div>
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-0.5 uppercase tracking-wide">
+            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wide">
               Präsidium
             </p>
             <p className="text-sm text-gray-700 dark:text-gray-300">
@@ -139,27 +143,30 @@ const AddressCard: React.FC<AddressCardProps> = ({
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pt-4 border-t border-gray-200 dark:border-gray-700 mt-auto">
-          <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400 flex-wrap">
+        {/* Footer-Bereich mit Metadaten und Aktionen */}
+        <div className="flex flex-col gap-3 pt-4 border-t border-gray-200 dark:border-gray-700 mt-auto">
+          {/* Metadaten */}
+          <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
             {address.isVerified && (
               <span className="flex items-center gap-1">
-                <Check className="w-4 h-4 text-green-500" />
+                <Check className="w-3 h-3 text-green-500" />
                 Verifiziert
               </span>
             )}
             {address.isAnonymous && (
               <span className="flex items-center gap-1">
-                <User className="w-4 h-4 text-orange-500" />
+                <User className="w-3 h-3 text-orange-500" />
                 Anonym
               </span>
             )}
             <span className="flex items-center gap-1">
-              <User className="w-4 h-4" />
+              <Database className="w-3 h-3" />
               ID: {address.id}
             </span>
           </div>
 
-          <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Aktions-Buttons */}
+          <div className="flex items-center gap-1 flex-wrap">
             {/* Admin-Buttons für Genehmigung/Ablehnung */}
             {canApprove && (
               <button
