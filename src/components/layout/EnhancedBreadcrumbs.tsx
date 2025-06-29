@@ -5,8 +5,8 @@ import { useAppStore } from '@/lib/store/app-store';
 import { useAuthStore } from '@/lib/store/auth-store';
 
 interface BreadcrumbsProps {
-  currentView: 'wizard' | 'login' | 'admin';
-  onNavigate?: (view: 'wizard' | 'login' | 'admin', step?: number) => void;
+  currentView: 'wizard' | 'login' | 'admin' | 'test';
+  onNavigate?: (view: 'wizard' | 'login' | 'admin' | 'test', step?: number) => void;
 }
 
 interface BreadcrumbItem {
@@ -14,7 +14,7 @@ interface BreadcrumbItem {
   icon?: React.ComponentType<any>;
   active: boolean;
   clickable: boolean;
-  view?: 'wizard' | 'login' | 'admin';
+  view?: 'wizard' | 'login' | 'admin' | 'test';
   step?: number;
   mobile?: boolean; // Für Mobile-optimierte Darstellung
 }
@@ -89,6 +89,21 @@ const EnhancedBreadcrumbs: React.FC<BreadcrumbsProps> = ({ currentView, onNaviga
           clickable: false
         });
       }
+    } else if (currentView === 'test') {
+      items.push({ 
+        label: 'RevierKompass', 
+        icon: Home, 
+        active: false,
+        clickable: true,
+        view: 'wizard',
+        step: 1
+      });
+      items.push({ 
+        label: 'Test Import', 
+        icon: undefined, 
+        active: true,
+        clickable: false
+      });
     }
 
     return items;

@@ -129,6 +129,129 @@ app.delete('/api/stationen/:id', async (req, res) => {
   }
 });
 
+// Alle Stationen löschen (für Datenbank-Bereinigung)
+app.delete('/api/stationen', async (req, res) => {
+  try {
+    const deletedCount = await prisma.policeStation.deleteMany({});
+    console.log(`🧹 ${deletedCount.count} Stationen gelöscht`);
+    res.json({ 
+      message: `${deletedCount.count} Stationen erfolgreich gelöscht`,
+      deletedCount: deletedCount.count 
+    });
+  } catch (error) {
+    console.error('Fehler beim Löschen aller Stationen:', error);
+    res.status(500).json({ error: 'Stationen konnten nicht gelöscht werden' });
+  }
+});
+
+// ===== ADDRESS ROUTES =====
+
+// POST /api/addresses/anonymous - Create anonymous address for review
+app.post('/api/addresses/anonymous', async (req, res) => {
+  try {
+    const addressData = {
+      ...req.body,
+      userId: null,
+      isAnonymous: true,
+      reviewStatus: 'pending',
+      addressType: req.body.addressType || 'permanent',
+      parentId: req.body.parentId || null,
+      coordinates: req.body.coordinates ? JSON.stringify(req.body.coordinates) : null
+    };
+
+    const address = await prisma.customAddress.create({
+      data: addressData,
+    });
+
+    res.status(201).json({
+      message: 'Adresse zur Überprüfung eingereicht',
+      address: {
+        id: address.id,
+        name: address.name,
+        reviewStatus: address.reviewStatus,
+        addressType: address.addressType,
+      },
+    });
+  } catch (error) {
+    console.error('Create anonymous address error:', error);
+    res.status(500).json({ error: 'Fehler beim Einreichen der Adresse' });
+  }
+});
+
+// PUT /api/addresses/anonymous/:id - Update anonymous address
+app.put('/api/addresses/anonymous/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const address = await prisma.customAddress.update({
+      where: { id },
+      data: {
+        ...req.body,
+        coordinates: req.body.coordinates ? JSON.stringify(req.body.coordinates) : null
+      },
+    });
+
+    res.json({
+      message: 'Adresse erfolgreich aktualisiert',
+      address,
+    });
+  } catch (error) {
+    console.error('Update anonymous address error:', error);
+    res.status(500).json({ error: 'Fehler beim Aktualisieren der Adresse' });
+  }
+});
+
+// DELETE /api/addresses/anonymous/:id - Delete anonymous address
+app.delete('/api/addresses/anonymous/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Soft delete
+    const address = await prisma.customAddress.update({
+      where: { id },
+      data: { isActive: false },
+    });
+
+    res.json({
+      message: 'Adresse erfolgreich gelöscht',
+      address,
+    });
+  } catch (error) {
+    console.error('Delete anonymous address error:', error);
+    res.status(500).json({ error: 'Fehler beim Löschen der Adresse' });
+  }
+});
+
+// GET /api/addresses - Get all addresses (for admin)
+app.get('/api/addresses', async (req, res) => {
+  try {
+    const addresses = await prisma.customAddress.findMany({
+      where: { isActive: true },
+      orderBy: { createdAt: 'desc' },
+    });
+    
+    res.json(addresses);
+  } catch (error) {
+    console.error('Get addresses error:', error);
+    res.status(500).json({ error: 'Fehler beim Laden der Adressen' });
+  }
+});
+
+// Alle Adressen löschen (für Datenbank-Bereinigung)
+app.delete('/api/addresses', async (req, res) => {
+  try {
+    const deletedCount = await prisma.customAddress.deleteMany({});
+    console.log(`🧹 ${deletedCount.count} Adressen gelöscht`);
+    res.json({ 
+      message: `${deletedCount.count} Adressen erfolgreich gelöscht`,
+      deletedCount: deletedCount.count 
+    });
+  } catch (error) {
+    console.error('Fehler beim Löschen aller Adressen:', error);
+    res.status(500).json({ error: 'Adressen konnten nicht gelöscht werden' });
+  }
+});
+
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({ 

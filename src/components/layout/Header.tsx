@@ -8,7 +8,7 @@ interface HeaderProps {
   onAdminLogin: () => void;
   onBackToWizard: () => void;
   onGoToAdmin?: () => void;
-  currentView: 'wizard' | 'login' | 'admin';
+  currentView: 'wizard' | 'login' | 'admin' | 'test';
 }
 
 const Header: React.FC<HeaderProps> = ({ onAdminLogin, onBackToWizard, onGoToAdmin, currentView }) => {

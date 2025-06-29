@@ -120,29 +120,41 @@ const Step2: React.FC = () => {
   const handleEditPermanent = async (address: any) => {
     try {
       setIsEditing(true);
-      const response = await fetch(`/api/addresses/${address.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          // 'Authorization': `Bearer ${userToken}` // Falls Authentifizierung benötigt
-        },
-        body: JSON.stringify({
-          ...address,
-          name: formData.name,
-          street: formData.street,
-          zipCode: formData.zipCode,
-          city: formData.city,
-          parentId: formData.parentId
-        })
-      });
       
-      if (!response.ok) throw new Error('Update failed');
-      
-      const updatedAddress = await response.json();
-      
-      // Optimistisches UI-Update
-      handleEditAddress(updatedAddress);
-      toast.success('Adresse erfolgreich aktualisiert');
+      try {
+        const response = await fetch(`/api/addresses/${address.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            // 'Authorization': `Bearer ${userToken}` // Falls Authentifizierung benötigt
+          },
+          body: JSON.stringify({
+            ...address,
+            name: formData.name,
+            street: formData.street,
+            zipCode: formData.zipCode,
+            city: formData.city,
+            parentId: formData.parentId
+          })
+        });
+        
+        if (!response.ok) {
+          throw new Error('Backend nicht verfügbar');
+        }
+        
+        const updatedAddress = await response.json();
+        
+        // Optimistisches UI-Update
+        handleEditAddress(updatedAddress);
+        toast.success('Adresse erfolgreich aktualisiert');
+      } catch (backendError) {
+        console.warn('Backend nicht verfügbar, bearbeite nur lokal:', backendError);
+        
+        // Fallback: Lokale Bearbeitung
+        const updatedAddress = { ...address, ...formData };
+        handleEditAddress(updatedAddress);
+        toast.success('Adresse lokal aktualisiert (Backend nicht verfügbar)');
+      }
     } catch (error) {
       console.error('Fehler beim Bearbeiten:', error);
       toast.error('Fehler beim Bearbeiten der Adresse');
@@ -165,18 +177,28 @@ const Step2: React.FC = () => {
       }
       
       // Permanente Adresse löschen (API-Call)
-      const response = await fetch(`/api/addresses/${id}`, {
-        method: 'DELETE',
-        headers: {
-          // 'Authorization': `Bearer ${userToken}` // Falls Authentifizierung benötigt
+      try {
+        const response = await fetch(`/api/addresses/${id}`, {
+          method: 'DELETE',
+          headers: {
+            // 'Authorization': `Bearer ${userToken}` // Falls Authentifizierung benötigt
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Backend nicht verfügbar');
         }
-      });
-      
-      if (!response.ok) throw new Error('Delete failed');
-      
-      // Optimistisches UI-Update
-      handleDeleteAddress(id);
-      toast.success('Adresse erfolgreich gelöscht');
+        
+        // Optimistisches UI-Update
+        handleDeleteAddress(id);
+        toast.success('Adresse erfolgreich gelöscht');
+      } catch (backendError) {
+        console.warn('Backend nicht verfügbar, lösche nur lokal:', backendError);
+        
+        // Fallback: Lokale Löschung
+        handleDeleteAddress(id);
+        toast.success('Adresse lokal gelöscht (Backend nicht verfügbar)');
+      }
     } catch (error) {
       console.error('Fehler beim Löschen:', error);
       toast.error('Fehler beim Löschen der Adresse');

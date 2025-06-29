@@ -8,17 +8,24 @@ import Footer from '@/components/layout/Footer';
 import WizardContainer from '@/components/wizard/WizardContainer';
 import LoginForm from '@/components/auth/LoginForm';
 import AdminDashboard from '@/components/admin/AdminDashboard';
+import TestImport from '@/pages/TestImport';
 
 function App() {
-  const [currentView, setCurrentView] = useState<'wizard' | 'login' | 'admin'>('wizard');
+  const [currentView, setCurrentView] = useState<'wizard' | 'login' | 'admin' | 'test'>('wizard');
   const { isDarkMode, setWizardStep } = useAppStore();
   const { isAuthenticated, isAdmin } = useAuthStore();
 
   // Beim Start der Anwendung immer zum Wizard mit Schritt 1 (Adressen-Startseite) navigieren
   useEffect(() => {
-    setCurrentView('wizard');
-    setWizardStep(1);
-    console.log('🚀 RevierKompass gestartet - Adressen-Startseite aktiviert');
+    // Prüfe URL für Test-Seite
+    if (window.location.hash === '#test') {
+      setCurrentView('test');
+      console.log('🚀 Test-Seite aktiviert via URL');
+    } else {
+      setCurrentView('wizard');
+      setWizardStep(1);
+      console.log('🚀 RevierKompass gestartet - Adressen-Startseite aktiviert');
+    }
   }, [setWizardStep]);
 
   useEffect(() => {
@@ -81,7 +88,7 @@ function App() {
     }
   };
 
-  const handleBreadcrumbNavigation = (view: 'wizard' | 'login' | 'admin', step?: number) => {
+  const handleBreadcrumbNavigation = (view: 'wizard' | 'login' | 'admin' | 'test', step?: number) => {
     console.log('Breadcrumb Navigation:', view, step);
     setCurrentView(view);
     
@@ -112,6 +119,7 @@ function App() {
         {currentView === 'wizard' && <WizardContainer />}
         {currentView === 'login' && <LoginForm onSuccess={handleLoginSuccess} />}
         {currentView === 'admin' && isAuthenticated && <AdminDashboard />}
+        {currentView === 'test' && <TestImport />}
       </main>
       
       <Footer />

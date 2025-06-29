@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
-import { Building2, MapPin, Settings, BarChart3 } from 'lucide-react'
+import { Building2, MapPin, Settings, BarChart3, Database } from 'lucide-react'
 import { AdminStationManagement } from './stations'
 import { AdminAddressManagement } from './addresses'
+import AddressImporter from './AddressImporter'
 
 const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('stations')
@@ -18,6 +19,12 @@ const AdminDashboard: React.FC = () => {
       label: 'Adressen',
       icon: MapPin,
       description: 'Benutzer-Adressen verwalten und genehmigen'
+    },
+    {
+      id: 'import',
+      label: 'Import',
+      icon: Database,
+      description: 'Adressen aus Daten-Dateien importieren'
     },
     {
       id: 'analytics',
@@ -39,6 +46,14 @@ const AdminDashboard: React.FC = () => {
         return <AdminStationManagement />
       case 'addresses':
         return <AdminAddressManagement />
+      case 'import':
+        return (
+          <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+              <AddressImporter />
+            </div>
+          </div>
+        )
       case 'analytics':
         return (
           <div className="min-h-screen bg-gray-50 dark:bg-gray-900 pb-20">

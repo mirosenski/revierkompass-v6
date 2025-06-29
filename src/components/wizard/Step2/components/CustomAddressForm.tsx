@@ -15,7 +15,7 @@ interface CustomAddressFormProps {
   isEditing?: boolean;
 }
 
-const CustomAddressForm: React.FC<CustomAddressFormProps> = ({
+const CustomAddressForm: React.FC<CustomAddressFormProps> = React.memo(({
   showAddForm,
   formData,
   setFormData,
@@ -28,15 +28,22 @@ const CustomAddressForm: React.FC<CustomAddressFormProps> = ({
 }) => {
   if (!showAddForm) return null;
 
-  const handleSubmit = () => {
+  const handleSubmit = React.useCallback(() => {
     if (editAddress && onEditSubmit) {
       onEditSubmit(formData);
     } else {
       onAddAddress();
     }
-  };
+  }, [editAddress, onEditSubmit, formData, onAddAddress]);
 
   const isEditMode = !!editAddress;
+
+  // Setze Standard auf temporäre Adressen für bessere UX - nur beim ersten Rendern
+  React.useEffect(() => {
+    if (!isEditMode && formData.addressType === 'permanent') {
+      setFormData({ ...formData, addressType: 'temporary' });
+    }
+  }, [isEditMode]); // Nur isEditMode als Abhängigkeit
 
   return (
     <motion.div
@@ -79,7 +86,7 @@ const CustomAddressForm: React.FC<CustomAddressFormProps> = ({
                 <div>
                   <div className="font-medium text-gray-900 dark:text-white">Temporäre Adresse</div>
                   <div className="text-sm text-gray-500 dark:text-gray-400">
-                    Nur für diese Sitzung verfügbar
+                    Sofort verfügbar für Routenberechnung
                   </div>
                 </div>
               </div>
@@ -218,7 +225,7 @@ const CustomAddressForm: React.FC<CustomAddressFormProps> = ({
               {isEditMode 
                 ? 'Bearbeiten Sie die Adressdetails und speichern Sie die Änderungen.'
                 : (formData.addressType === 'temporary' 
-                    ? 'Diese Adresse wird nur für die aktuelle Sitzung gespeichert und erscheint in der Routenberechnung, wird aber nicht dauerhaft gespeichert.'
+                    ? 'Diese Adresse wird sofort für die Routenberechnung verfügbar sein und kann in Step 3 verwendet werden.'
                     : 'Diese Adresse wird zur Überprüfung an Admins gesendet. Nach Genehmigung wird sie dauerhaft in der Datenbank gespeichert und steht allen Nutzern zur Verfügung.'
                   )
               }
@@ -240,7 +247,7 @@ const CustomAddressForm: React.FC<CustomAddressFormProps> = ({
             </>
           ) : (
             <>
-              <span>{isEditMode ? 'Aktualisieren' : (formData.addressType === 'temporary' ? 'Temporär hinzufügen' : 'Zur Überprüfung einreichen')}</span>
+              <span>{isEditMode ? 'Aktualisieren' : (formData.addressType === 'temporary' ? 'Sofort hinzufügen' : 'Zur Überprüfung einreichen')}</span>
             </>
           )}
         </button>
@@ -254,6 +261,8 @@ const CustomAddressForm: React.FC<CustomAddressFormProps> = ({
       </div>
     </motion.div>
   );
-};
+});
+
+CustomAddressForm.displayName = 'CustomAddressForm';
 
 export default CustomAddressForm; 
