@@ -9,6 +9,7 @@ import AddressCard from './AddressCard'
 import AddressModal from './AddressModal'
 import AddressFilters from './AddressFilters'
 import { motion } from 'framer-motion'
+import ConvertToStationModal from './ConvertToStationModal'
 
 type AddressTab = 'station' | 'user' | 'temporary'
 
@@ -20,18 +21,18 @@ const AdminAddressManagement: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<AddressTab>('user')
-
   const [filters, setFilters] = useState<AddressFilterState>({
     search: '',
     city: '',
     status: 'all',
     showInactive: false
   })
-
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingAddress, setEditingAddress] = useState<Address | null>(null)
   const [stats, setStats] = useState<any>(null)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [isConvertModalOpen, setIsConvertModalOpen] = useState(false)
+  const [convertingAddress, setConvertingAddress] = useState<Address | null>(null)
 
   // Load addresses on mount
   useEffect(() => {
@@ -46,20 +47,22 @@ const AdminAddressManagement: React.FC = () => {
     // Filter by address type based on active tab
     switch (activeTab) {
       case 'station':
-        // Station addresses: addresses that are linked to stations or are official
+        // Station addresses: addresses that are linked to stations or are verified
         filtered = filtered.filter(addr => 
-          addr.isOfficial || addr.stationId || addr.type === 'station'
+          addr.parentId && addr.isVerified
         )
         break
       case 'user':
-        // User addresses: addresses pending approval or created by users
+        // User addresses: permanent addresses that are not anonymous
         filtered = filtered.filter(addr => 
-          !addr.isOfficial && !addr.stationId && addr.type !== 'station' && !addr.isTemporary
+          !addr.isAnonymous && addr.addressType === 'permanent'
         )
         break
       case 'temporary':
-        // Temporary addresses: session-only addresses
-        filtered = filtered.filter(addr => addr.isTemporary)
+        // Temporary addresses: temporary or anonymous addresses
+        filtered = filtered.filter(addr => 
+          addr.addressType === 'temporary' || addr.isAnonymous
+        )
         break
     }
 
@@ -147,7 +150,7 @@ const AdminAddressManagement: React.FC = () => {
     const address = addresses.find(addr => addr.id === id)
     
     // Stationen-Adressen können nicht gelöscht werden
-    if (address && (address.isOfficial || address.stationId || address.type === 'station')) {
+    if (address && (address.parentId && address.isVerified)) {
       toast.error('Stationen-Adressen können nicht gelöscht werden. Bearbeiten Sie diese über den Bereich "Stationen".')
       return
     }
@@ -166,7 +169,7 @@ const AdminAddressManagement: React.FC = () => {
 
   const handleApprove = async (id: string) => {
     try {
-      await adminAddressService.updateAddress(id, { reviewStatus: 'approved' })
+      await adminAddressService.approveAddress(id)
       toast.success('Adresse genehmigt')
       await loadAddresses()
     } catch (err) {
@@ -177,13 +180,67 @@ const AdminAddressManagement: React.FC = () => {
 
   const handleReject = async (id: string) => {
     try {
-      await adminAddressService.updateAddress(id, { reviewStatus: 'rejected' })
+      await adminAddressService.rejectAddress(id)
       toast.success('Adresse abgelehnt')
       await loadAddresses()
     } catch (err) {
       console.error('Error rejecting address:', err)
       toast.error('Fehler beim Ablehnen der Adresse')
     }
+  }
+
+  // Convert address to station
+  const handleConvertToStation = async (address: Address, stationData: any) => {
+    try {
+      setIsLoading(true)
+      
+      // Create new station from address data
+      const stationPayload = {
+        name: address.name,
+        type: stationData.type,
+        city: address.city,
+        address: address.street,
+        coordinates: address.coordinates,
+        telefon: stationData.telefon,
+        email: stationData.email,
+        notdienst24h: stationData.notdienst24h,
+        isActive: stationData.isActive,
+        parentId: stationData.type === 'revier' ? stationData.parentId : undefined
+      }
+
+      // Create station via stations API
+      const response = await fetch('/api/stationen', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(stationPayload)
+      })
+
+      if (!response.ok) {
+        throw new Error('Fehler beim Erstellen der Station')
+      }
+
+      const newStation = await response.json()
+
+      // Delete the original address
+      await adminAddressService.deleteAddress(address.id)
+
+      toast.success(`Adresse erfolgreich zu Station "${newStation.name}" konvertiert`)
+      await loadAddresses()
+      
+    } catch (err) {
+      console.error('Error converting address to station:', err)
+      toast.error('Fehler beim Konvertieren der Adresse')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Handle convert button click
+  const handleConvertClick = (address: Address) => {
+    setConvertingAddress(address)
+    setIsConvertModalOpen(true)
   }
 
   // Handle filter changes
@@ -267,7 +324,7 @@ const AdminAddressManagement: React.FC = () => {
     // Filtere Stationen-Adressen aus der Auswahl
     const deletableIds = selectedIds.filter(id => {
       const address = addresses.find(addr => addr.id === id)
-      return !address || !(address.isOfficial || address.stationId || address.type === 'station')
+      return !address || !(address.parentId && address.isVerified)
     })
     
     const nonDeletableCount = selectedIds.length - deletableIds.length
@@ -391,7 +448,7 @@ const AdminAddressManagement: React.FC = () => {
                 <Users className="w-4 h-4" />
                 Nutzer-Adressen
                 <span className="ml-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 py-0.5 px-2 rounded-full text-xs">
-                  {addresses.filter(addr => !addr.isOfficial && !addr.stationId && addr.type !== 'station' && !addr.isTemporary).length}
+                  {addresses.filter(addr => !addr.isAnonymous && addr.addressType === 'permanent').length}
                 </span>
               </button>
               
@@ -406,7 +463,7 @@ const AdminAddressManagement: React.FC = () => {
                 <Building2 className="w-4 h-4" />
                 Stationen-Adressen
                 <span className="ml-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 py-0.5 px-2 rounded-full text-xs">
-                  {addresses.filter(addr => addr.isOfficial || addr.stationId || addr.type === 'station').length}
+                  {addresses.filter(addr => addr.parentId && addr.isVerified).length}
                 </span>
               </button>
               
@@ -421,7 +478,7 @@ const AdminAddressManagement: React.FC = () => {
                 <Clock3 className="w-4 h-4" />
                 Temporäre Adressen
                 <span className="ml-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 py-0.5 px-2 rounded-full text-xs">
-                  {addresses.filter(addr => addr.isTemporary).length}
+                  {addresses.filter(addr => addr.addressType === 'temporary' || addr.isAnonymous).length}
                 </span>
               </button>
             </nav>
@@ -498,6 +555,7 @@ const AdminAddressManagement: React.FC = () => {
                   onDelete={handleDelete}
                   onApprove={handleApprove}
                   onReject={handleReject}
+                  onConvertToStation={handleConvertClick}
                   checked={selectedIds.includes(address.id)}
                   onCheck={handleCheck}
                 />
@@ -515,6 +573,18 @@ const AdminAddressManagement: React.FC = () => {
         onSave={handleSave}
         isLoading={isLoading}
         error={error}
+        availablePraesidien={availablePraesidien}
+      />
+
+      {/* Convert to Station Modal */}
+      <ConvertToStationModal
+        address={convertingAddress}
+        isOpen={isConvertModalOpen}
+        onClose={() => {
+          setIsConvertModalOpen(false)
+          setConvertingAddress(null)
+        }}
+        onConvert={handleConvertToStation}
         availablePraesidien={availablePraesidien}
       />
     </div>

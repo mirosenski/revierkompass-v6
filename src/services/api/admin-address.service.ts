@@ -1,7 +1,7 @@
 import axios from 'axios'
 
-// Verwende Vite Proxy statt direkter Backend-URL
-const API_URL = '/api/stationen'
+// Verwende die korrekte API-URL für Adressen
+const API_URL = '/api/addresses'
 
 export interface Address {
   id: string
@@ -9,7 +9,7 @@ export interface Address {
   street: string
   zipCode: string
   city: string
-  coordinates: [number, number]
+  coordinates: [number, number] | null
   isVerified: boolean
   isActive: boolean
   reviewStatus: 'pending' | 'approved' | 'rejected'
@@ -23,6 +23,12 @@ export interface Address {
   stationId?: string
   type?: 'station' | 'address' | 'custom' | 'temporary'
   isTemporary?: boolean
+  isAnonymous?: boolean
+  addressType?: 'temporary' | 'permanent'
+  reviewNotes?: string
+  reviewedBy?: string
+  reviewedAt?: string
+  updatedAt?: string
 }
 
 export interface CreateAddressData {
@@ -30,90 +36,41 @@ export interface CreateAddressData {
   street: string
   zipCode: string
   city: string
-  coordinates: [number, number]
+  coordinates?: [number, number] | null
   isVerified?: boolean
   isActive?: boolean
   reviewStatus?: 'pending' | 'approved' | 'rejected'
   parentId?: string
+  isAnonymous?: boolean
+  addressType?: 'temporary' | 'permanent'
+  userId?: string
 }
 
 export interface UpdateAddressData extends Partial<CreateAddressData> {}
 
 export const adminAddressService = {
-  // Alle Adressen abrufen (als Stationen mit speziellem Typ)
+  // Alle Adressen abrufen (inklusive anonyme Adressen)
   async getAllAddresses(): Promise<Address[]> {
     try {
       const response = await axios.get(API_URL)
-      // Filtere nur Adressen (Stationen mit speziellem Typ oder ohne parentId)
-      const addresses = response.data.filter((station: any) => 
-        station.type === 'address' || !station.parentId || station.type === 'custom'
-      )
-      return addresses.map((station: any) => ({
-        id: station.id,
-        name: station.name,
-        street: station.address,
-        zipCode: station.zipCode || '',
-        city: station.city,
-        coordinates: station.coordinates,
-        isVerified: station.isVerified || false,
-        isActive: station.isActive,
-        reviewStatus: station.reviewStatus || 'pending',
-        createdAt: station.lastModified,
-        user: station.user,
-        parentId: station.parentId,
-        // Neue Felder für Tab-Filterung
-        isOfficial: station.type === 'praesidium' || station.type === 'revier',
-        stationId: station.parentId || null,
-        type: station.type === 'praesidium' || station.type === 'revier' ? 'station' : 
-              station.type === 'address' ? 'address' : 
-              station.type === 'custom' ? 'custom' : 'temporary',
-        isTemporary: station.type === 'temporary' || station.isTemporary || false
-      }))
+      // Die API gibt bereits die korrekte Struktur zurück
+      return response.data.addresses || response.data || []
     } catch (error) {
       console.error('Fehler beim Laden der Adressen:', error)
       throw error
     }
   },
 
-  // Neue Adresse erstellen (als Station)
+  // Neue Adresse erstellen
   async createAddress(addressData: CreateAddressData): Promise<Address> {
     try {
-      const stationData = {
-        name: addressData.name,
-        type: 'address',
-        city: addressData.city,
-        address: addressData.street,
-        coordinates: addressData.coordinates,
-        telefon: '',
-        email: '',
-        notdienst24h: false,
-        isActive: addressData.isActive !== false,
-        isVerified: addressData.isVerified || false,
-        reviewStatus: addressData.reviewStatus || 'pending',
-        zipCode: addressData.zipCode,
-        parentId: addressData.parentId || undefined
-      }
-      
-      const response = await axios.post(API_URL, stationData, {
+      const response = await axios.post(API_URL, addressData, {
         headers: {
           'Content-Type': 'application/json'
         }
       })
       
-      return {
-        id: response.data.id,
-        name: response.data.name,
-        street: response.data.address,
-        zipCode: response.data.zipCode || '',
-        city: response.data.city,
-        coordinates: response.data.coordinates,
-        isVerified: response.data.isVerified || false,
-        isActive: response.data.isActive,
-        reviewStatus: response.data.reviewStatus || 'pending',
-        createdAt: response.data.lastModified,
-        user: response.data.user,
-        parentId: response.data.parentId
-      }
+      return response.data.address || response.data
     } catch (error) {
       console.error('Fehler beim Erstellen der Adresse:', error)
       throw error
@@ -123,37 +80,13 @@ export const adminAddressService = {
   // Adresse aktualisieren
   async updateAddress(id: string, addressData: UpdateAddressData): Promise<Address> {
     try {
-      const stationData: any = {}
-      if (addressData.name) stationData.name = addressData.name
-      if (addressData.street) stationData.address = addressData.street
-      if (addressData.city) stationData.city = addressData.city
-      if (addressData.coordinates) stationData.coordinates = addressData.coordinates
-      if (addressData.zipCode) stationData.zipCode = addressData.zipCode
-      if (addressData.isVerified !== undefined) stationData.isVerified = addressData.isVerified
-      if (addressData.isActive !== undefined) stationData.isActive = addressData.isActive
-      if (addressData.reviewStatus) stationData.reviewStatus = addressData.reviewStatus
-      if (addressData.parentId !== undefined) stationData.parentId = addressData.parentId
-      
-      const response = await axios.put(`${API_URL}/${id}`, stationData, {
+      const response = await axios.put(`${API_URL}/${id}`, addressData, {
         headers: {
           'Content-Type': 'application/json'
         }
       })
       
-      return {
-        id: response.data.id,
-        name: response.data.name,
-        street: response.data.address,
-        zipCode: response.data.zipCode || '',
-        city: response.data.city,
-        coordinates: response.data.coordinates,
-        isVerified: response.data.isVerified || false,
-        isActive: response.data.isActive,
-        reviewStatus: response.data.reviewStatus || 'pending',
-        createdAt: response.data.lastModified,
-        user: response.data.user,
-        parentId: response.data.parentId
-      }
+      return response.data.address || response.data
     } catch (error) {
       console.error('Fehler beim Aktualisieren der Adresse:', error)
       throw error
@@ -173,29 +106,15 @@ export const adminAddressService = {
   // Adresse genehmigen
   async approveAddress(id: string): Promise<Address> {
     try {
-      const response = await axios.put(`${API_URL}/${id}`, { 
-        reviewStatus: 'approved',
-        isVerified: true 
+      const response = await axios.put(`${API_URL}/${id}/review`, { 
+        action: 'approve'
       }, {
         headers: {
           'Content-Type': 'application/json'
         }
       })
       
-      return {
-        id: response.data.id,
-        name: response.data.name,
-        street: response.data.address,
-        zipCode: response.data.zipCode || '',
-        city: response.data.city,
-        coordinates: response.data.coordinates,
-        isVerified: response.data.isVerified || false,
-        isActive: response.data.isActive,
-        reviewStatus: response.data.reviewStatus || 'pending',
-        createdAt: response.data.lastModified,
-        user: response.data.user,
-        parentId: response.data.parentId
-      }
+      return response.data.address || response.data
     } catch (error) {
       console.error('Fehler beim Genehmigen der Adresse:', error)
       throw error
@@ -205,29 +124,16 @@ export const adminAddressService = {
   // Adresse ablehnen
   async rejectAddress(id: string, reason?: string): Promise<Address> {
     try {
-      const response = await axios.put(`${API_URL}/${id}`, { 
-        reviewStatus: 'rejected',
-        isActive: false
+      const response = await axios.put(`${API_URL}/${id}/review`, { 
+        action: 'reject',
+        notes: reason
       }, {
         headers: {
           'Content-Type': 'application/json'
         }
       })
       
-      return {
-        id: response.data.id,
-        name: response.data.name,
-        street: response.data.address,
-        zipCode: response.data.zipCode || '',
-        city: response.data.city,
-        coordinates: response.data.coordinates,
-        isVerified: response.data.isVerified || false,
-        isActive: response.data.isActive,
-        reviewStatus: response.data.reviewStatus || 'pending',
-        createdAt: response.data.lastModified,
-        user: response.data.user,
-        parentId: response.data.parentId
-      }
+      return response.data.address || response.data
     } catch (error) {
       console.error('Fehler beim Ablehnen der Adresse:', error)
       throw error
@@ -237,26 +143,21 @@ export const adminAddressService = {
   // Ausstehende Adressen abrufen
   async getPendingAddresses(): Promise<Address[]> {
     try {
-      const response = await axios.get(API_URL)
-      const pendingAddresses = response.data.filter((station: any) => 
-        (station.type === 'address' || !station.parentId) && 
-        station.reviewStatus === 'pending'
-      )
-      return pendingAddresses.map((station: any) => ({
-        id: station.id,
-        name: station.name,
-        street: station.address,
-        zipCode: station.zipCode || '',
-        city: station.city,
-        coordinates: station.coordinates,
-        isVerified: station.isVerified || false,
-        isActive: station.isActive,
-        reviewStatus: station.reviewStatus || 'pending',
-        createdAt: station.lastModified,
-        user: station.user
-      }))
+      const response = await axios.get(`${API_URL}/admin/pending`)
+      return response.data || []
     } catch (error) {
       console.error('Fehler beim Laden ausstehender Adressen:', error)
+      throw error
+    }
+  },
+
+  // Unverifizierte Adressen abrufen
+  async getUnverifiedAddresses(): Promise<Address[]> {
+    try {
+      const response = await axios.get(`${API_URL}/admin/unverified`)
+      return response.data || []
+    } catch (error) {
+      console.error('Fehler beim Laden unverifizierter Adressen:', error)
       throw error
     }
   },
@@ -264,23 +165,8 @@ export const adminAddressService = {
   // Adress-Statistiken abrufen
   async getAddressStats(): Promise<any> {
     try {
-      const response = await axios.get(API_URL)
-      const addresses = response.data.filter((station: any) => 
-        station.type === 'address' || !station.parentId
-      )
-      
-      const total = addresses.length
-      const pending = addresses.filter((a: any) => a.reviewStatus === 'pending').length
-      const approved = addresses.filter((a: any) => a.reviewStatus === 'approved').length
-      const rejected = addresses.filter((a: any) => a.reviewStatus === 'rejected').length
-      
-      return {
-        total,
-        pending,
-        approved,
-        rejected,
-        verified: addresses.filter((a: any) => a.isVerified).length
-      }
+      const response = await axios.get(`${API_URL}/admin/stats`)
+      return response.data
     } catch (error) {
       console.error('Fehler beim Laden der Adress-Statistiken:', error)
       throw error

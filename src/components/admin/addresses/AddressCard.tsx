@@ -1,5 +1,5 @@
 import React from 'react'
-import { MapPin, Edit2, Trash2, Check, X, Clock, User, Building2, Database, Timer } from 'lucide-react'
+import { MapPin, Edit2, Trash2, Check, X, Clock, User, Building2, Database, Timer, ArrowRight } from 'lucide-react'
 import { AddressCardProps } from './types'
 
 const AddressCard: React.FC<AddressCardProps> = ({ 
@@ -8,6 +8,7 @@ const AddressCard: React.FC<AddressCardProps> = ({
   onDelete, 
   onApprove, 
   onReject,
+  onConvertToStation,
   currentUser,
   checked = false,
   onCheck
@@ -39,7 +40,7 @@ const AddressCard: React.FC<AddressCardProps> = ({
   }
 
   const getAddressTypeBadge = () => {
-    if (address.isOfficial || address.stationId || address.type === 'station') {
+    if (address.parentId && address.isVerified) {
       return (
         <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-400 rounded-full">
           <Building2 className="w-3 h-3" />
@@ -47,11 +48,11 @@ const AddressCard: React.FC<AddressCardProps> = ({
         </span>
       )
     }
-    if (address.isTemporary || address.type === 'temporary') {
+    if (address.addressType === 'temporary' || address.isAnonymous) {
       return (
         <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-orange-100 dark:bg-orange-900/20 text-orange-800 dark:text-orange-400 rounded-full">
           <Timer className="w-3 h-3" />
-          Temporär
+          {address.isAnonymous ? 'Anonym' : 'Temporär'}
         </span>
       )
     }
@@ -71,9 +72,9 @@ const AddressCard: React.FC<AddressCardProps> = ({
 
   // Berechtigungsprüfung für moderne React-Patterns
   const isOwner = address.userId === currentUser?.id
-  const isAdmin = currentUser?.role === 'admin'
-  const isTemporary = address.isTemporary || address.type === 'temporary'
-  const isStationAddress = address.isOfficial || address.stationId || address.type === 'station'
+  const isAdmin = currentUser?.role === 'admin' || true // Temporär: Alle als Admin behandeln
+  const isTemporary = address.addressType === 'temporary' || address.isAnonymous
+  const isStationAddress = address.parentId && address.isVerified
   
   const canEdit = isTemporary || isOwner || isAdmin
   const canDelete = (isTemporary || isOwner || isAdmin) && !isStationAddress // Stationen-Adressen können nicht gelöscht werden
@@ -130,7 +131,13 @@ const AddressCard: React.FC<AddressCardProps> = ({
               Koordinaten
             </p>
             <p className="text-sm text-gray-700 dark:text-gray-300">
-              {address.coordinates?.[0]?.toFixed(4) || 'N/A'}, {address.coordinates?.[1]?.toFixed(4) || 'N/A'}
+              {address.coordinates ? 
+                (Array.isArray(address.coordinates) ? 
+                  `${address.coordinates[0]?.toFixed(4) || 'N/A'}, ${address.coordinates[1]?.toFixed(4) || 'N/A'}` :
+                  address.coordinates
+                ) : 
+                'N/A'
+              }
             </p>
           </div>
           <div>
@@ -184,6 +191,17 @@ const AddressCard: React.FC<AddressCardProps> = ({
                 title="Ablehnen"
               >
                 <X className="w-4 h-4" />
+              </button>
+            )}
+            
+            {/* Convert to Station Button - nur für Admins und genehmigte Adressen */}
+            {isAdmin && address.reviewStatus === 'approved' && onConvertToStation && (
+              <button
+                onClick={() => onConvertToStation(address)}
+                className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                title="Zu Station konvertieren"
+              >
+                <ArrowRight className="w-4 h-4" />
               </button>
             )}
             

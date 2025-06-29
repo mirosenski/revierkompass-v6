@@ -21,6 +21,7 @@ export interface AddressCardProps {
   onDelete?: (id: string) => void;
   onApprove?: (id: string) => void;
   onReject?: (id: string) => void;
+  onConvertToStation?: (address: any) => void;
   currentUser?: {
     id: string;
     role: string;
