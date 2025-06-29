@@ -10,6 +10,9 @@ interface CustomAddressFormProps {
   onAddAddress: () => void;
   onCancel: () => void;
   availablePraesidien?: Array<{ id: string; name: string; city: string }>;
+  editAddress?: any | null;
+  onEditSubmit?: (data: FormData) => void;
+  isEditing?: boolean;
 }
 
 const CustomAddressForm: React.FC<CustomAddressFormProps> = ({
@@ -18,9 +21,22 @@ const CustomAddressForm: React.FC<CustomAddressFormProps> = ({
   setFormData,
   onAddAddress,
   onCancel,
-  availablePraesidien = []
+  availablePraesidien = [],
+  editAddress,
+  onEditSubmit,
+  isEditing
 }) => {
   if (!showAddForm) return null;
+
+  const handleSubmit = () => {
+    if (editAddress && onEditSubmit) {
+      onEditSubmit(formData);
+    } else {
+      onAddAddress();
+    }
+  };
+
+  const isEditMode = !!editAddress;
 
   return (
     <motion.div
@@ -30,74 +46,76 @@ const CustomAddressForm: React.FC<CustomAddressFormProps> = ({
       className="bg-gray-50 dark:bg-gray-700 rounded-xl p-6"
     >
       <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-        Neue Adresse hinzufügen
+        {isEditMode ? 'Adresse bearbeiten' : 'Neue Adresse hinzufügen'}
       </h4>
       
-      {/* Adress-Typ Auswahl */}
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-          Adress-Typ *
-        </label>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <label className="relative flex items-center p-4 border-2 border-gray-200 dark:border-gray-600 rounded-xl cursor-pointer hover:border-blue-300 dark:hover:border-blue-600 transition-colors">
-            <input
-              type="radio"
-              name="addressType"
-              value="temporary"
-              checked={formData.addressType === 'temporary'}
-              onChange={(e) => setFormData({ ...formData, addressType: e.target.value as 'temporary' | 'permanent' })}
-              className="sr-only"
-            />
-            <div className={`w-5 h-5 border-2 rounded-full mr-3 flex items-center justify-center ${
-              formData.addressType === 'temporary' 
-                ? 'border-blue-600 bg-blue-600' 
-                : 'border-gray-300 dark:border-gray-500'
-            }`}>
-              {formData.addressType === 'temporary' && (
-                <div className="w-2 h-2 bg-white rounded-full"></div>
-              )}
-            </div>
-            <div className="flex items-center space-x-3">
-              <Clock className="h-5 w-5 text-orange-500" />
-              <div>
-                <div className="font-medium text-gray-900 dark:text-white">Temporäre Adresse</div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                  Nur für diese Sitzung verfügbar
+      {/* Adress-Typ Auswahl - nur im Add-Modus */}
+      {!isEditMode && (
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+            Adress-Typ *
+          </label>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <label className="relative flex items-center p-4 border-2 border-gray-200 dark:border-gray-600 rounded-xl cursor-pointer hover:border-blue-300 dark:hover:border-blue-600 transition-colors">
+              <input
+                type="radio"
+                name="addressType"
+                value="temporary"
+                checked={formData.addressType === 'temporary'}
+                onChange={(e) => setFormData({ ...formData, addressType: e.target.value as 'temporary' | 'permanent' })}
+                className="sr-only"
+              />
+              <div className={`w-5 h-5 border-2 rounded-full mr-3 flex items-center justify-center ${
+                formData.addressType === 'temporary' 
+                  ? 'border-blue-600 bg-blue-600' 
+                  : 'border-gray-300 dark:border-gray-500'
+              }`}>
+                {formData.addressType === 'temporary' && (
+                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                )}
+              </div>
+              <div className="flex items-center space-x-3">
+                <Clock className="h-5 w-5 text-orange-500" />
+                <div>
+                  <div className="font-medium text-gray-900 dark:text-white">Temporäre Adresse</div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                    Nur für diese Sitzung verfügbar
+                  </div>
                 </div>
               </div>
-            </div>
-          </label>
+            </label>
 
-          <label className="relative flex items-center p-4 border-2 border-gray-200 dark:border-gray-600 rounded-xl cursor-pointer hover:border-green-300 dark:hover:border-green-600 transition-colors">
-            <input
-              type="radio"
-              name="addressType"
-              value="permanent"
-              checked={formData.addressType === 'permanent'}
-              onChange={(e) => setFormData({ ...formData, addressType: e.target.value as 'temporary' | 'permanent' })}
-              className="sr-only"
-            />
-            <div className={`w-5 h-5 border-2 rounded-full mr-3 flex items-center justify-center ${
-              formData.addressType === 'permanent' 
-                ? 'border-green-600 bg-green-600' 
-                : 'border-gray-300 dark:border-gray-500'
-            }`}>
-              {formData.addressType === 'permanent' && (
-                <div className="w-2 h-2 bg-white rounded-full"></div>
-              )}
-            </div>
-            <div className="flex items-center space-x-3">
-              <Database className="h-5 w-5 text-green-500" />
-              <div>
-                <div className="font-medium text-gray-900 dark:text-white">Permanente Adresse</div>
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                  Wird gespeichert und von Admins überprüft
+            <label className="relative flex items-center p-4 border-2 border-gray-200 dark:border-gray-600 rounded-xl cursor-pointer hover:border-green-300 dark:hover:border-green-600 transition-colors">
+              <input
+                type="radio"
+                name="addressType"
+                value="permanent"
+                checked={formData.addressType === 'permanent'}
+                onChange={(e) => setFormData({ ...formData, addressType: e.target.value as 'temporary' | 'permanent' })}
+                className="sr-only"
+              />
+              <div className={`w-5 h-5 border-2 rounded-full mr-3 flex items-center justify-center ${
+                formData.addressType === 'permanent' 
+                  ? 'border-green-600 bg-green-600' 
+                  : 'border-gray-300 dark:border-gray-500'
+              }`}>
+                {formData.addressType === 'permanent' && (
+                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                )}
+              </div>
+              <div className="flex items-center space-x-3">
+                <Database className="h-5 w-5 text-green-500" />
+                <div>
+                  <div className="font-medium text-gray-900 dark:text-white">Permanente Adresse</div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                    Wird gespeichert und von Admins überprüft
+                  </div>
                 </div>
               </div>
-            </div>
-          </label>
+            </label>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Adress-Details */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -165,7 +183,7 @@ const CustomAddressForm: React.FC<CustomAddressFormProps> = ({
                 onChange={(e) => setFormData({ ...formData, parentId: e.target.value || undefined })}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
               >
-                <option value="">Kein Präsidium zugeordnet</option>
+                <option key="no-parent" value="">Kein Präsidium zugeordnet</option>
                 {availablePraesidien.map((praesidium) => (
                   <option key={praesidium.id} value={praesidium.id}>
                     {praesidium.name} ({praesidium.city})
@@ -194,12 +212,15 @@ const CustomAddressForm: React.FC<CustomAddressFormProps> = ({
           )}
           <div>
             <h5 className="font-medium text-gray-900 dark:text-white">
-              {formData.addressType === 'temporary' ? 'Temporäre Adresse' : 'Permanente Adresse'}
+              {isEditMode ? 'Adresse bearbeiten' : (formData.addressType === 'temporary' ? 'Temporäre Adresse' : 'Permanente Adresse')}
             </h5>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              {formData.addressType === 'temporary' 
-                ? 'Diese Adresse wird nur für die aktuelle Sitzung gespeichert und erscheint in der Routenberechnung, wird aber nicht dauerhaft gespeichert.'
-                : 'Diese Adresse wird zur Überprüfung an Admins gesendet. Nach Genehmigung wird sie dauerhaft in der Datenbank gespeichert und steht allen Nutzern zur Verfügung.'
+              {isEditMode 
+                ? 'Bearbeiten Sie die Adressdetails und speichern Sie die Änderungen.'
+                : (formData.addressType === 'temporary' 
+                    ? 'Diese Adresse wird nur für die aktuelle Sitzung gespeichert und erscheint in der Routenberechnung, wird aber nicht dauerhaft gespeichert.'
+                    : 'Diese Adresse wird zur Überprüfung an Admins gesendet. Nach Genehmigung wird sie dauerhaft in der Datenbank gespeichert und steht allen Nutzern zur Verfügung.'
+                  )
               }
             </p>
           </div>
@@ -208,16 +229,27 @@ const CustomAddressForm: React.FC<CustomAddressFormProps> = ({
 
       <div className="flex space-x-3">
         <button
-          onClick={onAddAddress}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+          onClick={handleSubmit}
+          disabled={isEditing}
+          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg transition-colors flex items-center space-x-2"
         >
-          {formData.addressType === 'temporary' ? 'Temporär hinzufügen' : 'Zur Überprüfung einreichen'}
+          {isEditing ? (
+            <>
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              <span>Speichern...</span>
+            </>
+          ) : (
+            <>
+              <span>{isEditMode ? 'Aktualisieren' : (formData.addressType === 'temporary' ? 'Temporär hinzufügen' : 'Zur Überprüfung einreichen')}</span>
+            </>
+          )}
         </button>
         <button
           onClick={onCancel}
-          className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
+          disabled={isEditing}
+          className="px-4 py-2 bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 text-white rounded-lg transition-colors"
         >
-          Abbrechen
+          {isEditMode ? 'Abbrechen' : 'Abbrechen'}
         </button>
       </div>
     </motion.div>

@@ -199,9 +199,9 @@ const AddressModal: React.FC<AddressModalProps> = ({
                   }))}
                   className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 >
-                  <option value="pending">Ausstehend</option>
-                  <option value="approved">Genehmigt</option>
-                  <option value="rejected">Abgelehnt</option>
+                  <option key="pending" value="pending">Ausstehend</option>
+                  <option key="approved" value="approved">Genehmigt</option>
+                  <option key="rejected" value="rejected">Abgelehnt</option>
                 </select>
               </div>
 
@@ -217,8 +217,8 @@ const AddressModal: React.FC<AddressModalProps> = ({
                   }))}
                   className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 >
-                  <option value="temporary">Temporär</option>
-                  <option value="permanent">Permanent</option>
+                  <option key="temporary" value="temporary">Temporär</option>
+                  <option key="permanent" value="permanent">Permanent</option>
                 </select>
               </div>
 
@@ -231,7 +231,7 @@ const AddressModal: React.FC<AddressModalProps> = ({
                   onChange={(e) => setFormData(prev => ({ ...prev, parentId: e.target.value }))}
                   className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                 >
-                  <option value="">Kein Präsidium zugeordnet</option>
+                  <option key="no-parent" value="">Kein Präsidium zugeordnet</option>
                   {availablePraesidien.map((praesidium) => (
                     <option key={praesidium.id} value={praesidium.id}>
                       {praesidium.name}

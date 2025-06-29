@@ -34,7 +34,7 @@ const AddressFilters: React.FC<AddressFiltersProps> = ({
             onChange={(e) => onFilterChange('city', e.target.value)}
             className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
           >
-            <option value="">Alle Städte</option>
+            <option key="all-cities" value="">Alle Städte</option>
             {allCities.map((city) => (
               <option key={city} value={city}>
                 {city}
@@ -50,10 +50,10 @@ const AddressFilters: React.FC<AddressFiltersProps> = ({
             onChange={(e) => onFilterChange('status', e.target.value)}
             className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
           >
-            <option value="all">Alle Status</option>
-            <option value="pending">Ausstehend</option>
-            <option value="approved">Genehmigt</option>
-            <option value="rejected">Abgelehnt</option>
+            <option key="all" value="all">Alle Status</option>
+            <option key="pending" value="pending">Ausstehend</option>
+            <option key="approved" value="approved">Genehmigt</option>
+            <option key="rejected" value="rejected">Abgelehnt</option>
           </select>
         </div>
 

@@ -17,10 +17,14 @@ export interface AddressModalProps {
 
 export interface AddressCardProps {
   address: any;
-  onEdit: (address: any) => void;
-  onDelete: (id: string) => void;
+  onEdit?: (address: any) => void;
+  onDelete?: (id: string) => void;
   onApprove?: (id: string) => void;
   onReject?: (id: string) => void;
+  currentUser?: {
+    id: string;
+    role: string;
+  } | null;
 }
 
 export interface AddressFiltersProps {

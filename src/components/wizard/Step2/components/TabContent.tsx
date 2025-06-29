@@ -30,6 +30,13 @@ interface TabContentProps {
   availablePraesidien?: Array<{ id: string; name: string; city: string }>;
   onEditAddress?: (address: any) => void;
   onDeleteAddress?: (addressId: string) => void;
+  currentUser?: {
+    id: string;
+    role: string;
+  } | null;
+  editAddress?: any;
+  onEditSubmit?: (address: any) => void;
+  isEditing?: boolean;
 }
 
 const TabContent: React.FC<TabContentProps> = ({
@@ -55,7 +62,11 @@ const TabContent: React.FC<TabContentProps> = ({
   onMarkerClick,
   availablePraesidien = [],
   onEditAddress,
-  onDeleteAddress
+  onDeleteAddress,
+  currentUser,
+  editAddress,
+  onEditSubmit,
+  isEditing
 }) => {
   return (
     <AnimatePresence mode="wait">
@@ -234,6 +245,9 @@ const TabContent: React.FC<TabContentProps> = ({
             onAddAddress={onAddAddress}
             onCancel={onCancelAddForm}
             availablePraesidien={availablePraesidien}
+            editAddress={editAddress}
+            onEditSubmit={onEditSubmit}
+            isEditing={isEditing}
           />
 
           {/* Custom Addresses */}
@@ -257,6 +271,13 @@ const TabContent: React.FC<TabContentProps> = ({
               );
               
               return filteredAddresses.map((address) => {
+                // Berechtigungsprüfung für moderne React-Patterns
+                const isOwner = address.userId === currentUser?.id;
+                const isAdmin = currentUser?.role === 'admin';
+                const isTemporary = address.addressType === 'temporary';
+                const canEdit = isTemporary || isOwner || isAdmin;
+                const canDelete = isTemporary || isOwner || isAdmin;
+
                 return (
                   <motion.div
                     key={address.id}
@@ -311,7 +332,7 @@ const TabContent: React.FC<TabContentProps> = ({
                       )}
                     </div>
 
-                    {/* Aktions-Buttons */}
+                    {/* Aktions-Buttons mit dynamischer Logik */}
                     <div className="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-700">
                       <div className="text-xs text-gray-500 dark:text-gray-400">
                         {address.addressType === 'temporary' 
@@ -320,7 +341,8 @@ const TabContent: React.FC<TabContentProps> = ({
                         }
                       </div>
                       <div className="flex items-center gap-2">
-                        {onEditAddress && (
+                        {/* Edit-Button - nur für berechtigte Benutzer */}
+                        {canEdit && onEditAddress && (
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -332,7 +354,9 @@ const TabContent: React.FC<TabContentProps> = ({
                             <Edit2 className="w-4 h-4" />
                           </button>
                         )}
-                        {onDeleteAddress && (
+                        
+                        {/* Delete-Button - nur für berechtigte Benutzer */}
+                        {canDelete && onDeleteAddress && (
                           <button
                             onClick={(e) => {
                               e.stopPropagation();

@@ -7,7 +7,8 @@ const AddressCard: React.FC<AddressCardProps> = ({
   onEdit, 
   onDelete, 
   onApprove, 
-  onReject 
+  onReject,
+  currentUser 
 }) => {
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -66,6 +67,15 @@ const AddressCard: React.FC<AddressCardProps> = ({
     // Hier würde normalerweise die Präsidium-Name-Logik stehen
     return 'Präsidium Stuttgart' // Placeholder
   }
+
+  // Berechtigungsprüfung für moderne React-Patterns
+  const isOwner = address.userId === currentUser?.id
+  const isAdmin = currentUser?.role === 'admin'
+  const isTemporary = address.addressType === 'temporary'
+  const canEdit = isTemporary || isOwner || isAdmin
+  const canDelete = isTemporary || isOwner || isAdmin
+  const canApprove = isAdmin && address.reviewStatus === 'pending'
+  const canReject = isAdmin && address.reviewStatus === 'pending'
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 hover:shadow-xl transition-all duration-200 flex flex-col h-full">
@@ -135,38 +145,47 @@ const AddressCard: React.FC<AddressCardProps> = ({
           </div>
 
           <div className="flex items-center gap-2 flex-shrink-0">
-            {onApprove && address.reviewStatus === 'pending' && (
+            {/* Admin-Buttons für Genehmigung/Ablehnung */}
+            {canApprove && (
               <button
-                onClick={() => onApprove(address.id)}
+                onClick={() => onApprove?.(address.id)}
                 className="p-2 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-colors"
                 title="Genehmigen"
               >
                 <Check className="w-4 h-4" />
               </button>
             )}
-            {onReject && address.reviewStatus === 'pending' && (
+            {canReject && (
               <button
-                onClick={() => onReject(address.id)}
+                onClick={() => onReject?.(address.id)}
                 className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                 title="Ablehnen"
               >
                 <X className="w-4 h-4" />
               </button>
             )}
-            <button
-              onClick={() => onEdit(address)}
-              className="p-2 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
-              title="Bearbeiten"
-            >
-              <Edit2 className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => onDelete(address.id)}
-              className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-              title="Löschen"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
+            
+            {/* Edit-Button - nur für berechtigte Benutzer */}
+            {canEdit && onEdit && (
+              <button
+                onClick={() => onEdit(address)}
+                className="p-2 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-lg transition-colors"
+                title="Bearbeiten"
+              >
+                <Edit2 className="w-4 h-4" />
+              </button>
+            )}
+            
+            {/* Delete-Button - nur für berechtigte Benutzer */}
+            {canDelete && onDelete && (
+              <button
+                onClick={() => onDelete(address.id)}
+                className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                title="Löschen"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
       </div>

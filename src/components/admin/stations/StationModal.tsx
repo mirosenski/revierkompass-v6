@@ -145,8 +145,8 @@ export const StationModal: React.FC<StationModalProps> = React.memo(({
                 onChange={(e) => handleInputChange('type', e.target.value)}
                 className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
               >
-                <option value="praesidium">Präsidium</option>
-                <option value="revier">Revier</option>
+                <option key="praesidium" value="praesidium">Präsidium</option>
+                <option key="revier" value="revier">Revier</option>
               </select>
             </div>
           </div>
@@ -293,7 +293,7 @@ export const StationModal: React.FC<StationModalProps> = React.memo(({
                 onChange={(e) => handleInputChange('parentId', e.target.value)}
                 className="w-full px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
               >
-                <option value="">Kein Präsidium zugeordnet</option>
+                <option key="no-parent" value="">Kein Präsidium zugeordnet</option>
                 {availablePraesidien.map(praesidium => (
                   <option key={praesidium.id} value={praesidium.id}>
                     {praesidium.name}

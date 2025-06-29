@@ -42,7 +42,7 @@ export const StationFilters: React.FC<StationFiltersProps> = ({
             onChange={(e) => onFilterChange('city', e.target.value)}
             className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent appearance-none transition-colors"
           >
-            <option value="">Alle Städte</option>
+            <option key="all-cities" value="">Alle Städte</option>
             {allCities.map(city => (
               <option key={city} value={city}>{city}</option>
             ))}
@@ -57,9 +57,9 @@ export const StationFilters: React.FC<StationFiltersProps> = ({
             onChange={(e) => onFilterChange('type', e.target.value)}
             className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent appearance-none transition-colors"
           >
-            <option value="all">Alle Typen</option>
-            <option value="praesidium">Präsidium</option>
-            <option value="revier">Revier</option>
+            <option key="all" value="all">Alle Typen</option>
+            <option key="praesidium" value="praesidium">Präsidium</option>
+            <option key="revier" value="revier">Revier</option>
           </select>
         </div>
 

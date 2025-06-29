@@ -28,6 +28,11 @@ const Step2: React.FC = () => {
   const { setSelectedStations, setSelectedCustomAddresses } = useWizardStore();
   const { setSelectedStations: setAppSelectedStations, setSelectedCustomAddresses: setAppSelectedCustomAddresses } = useAppStore();
   
+  // Modernes State-Management für Adressbearbeitung
+  const [editAddress, setEditAddress] = useState<any | null>(null);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  
   // Lade Stationen beim Mounten der Komponente
   useEffect(() => {
     loadStations();
@@ -96,6 +101,104 @@ const Step2: React.FC = () => {
   } = useStep2Logic();
 
   const { addCustomAddress } = useAppStore();
+
+  // Moderne Handler für Adressbearbeitung
+  const handleEditTemporary = (address: any) => {
+    setEditAddress(address);
+    setFormData({
+      name: address.name,
+      street: address.street,
+      zipCode: address.zipCode,
+      city: address.city,
+      addressType: address.addressType as 'temporary' | 'permanent',
+      parentId: address.parentId
+    });
+    setShowEditForm(true);
+    setIsEditing(true);
+  };
+
+  const handleEditPermanent = async (address: any) => {
+    try {
+      setIsEditing(true);
+      const response = await fetch(`/api/addresses/${address.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          // 'Authorization': `Bearer ${userToken}` // Falls Authentifizierung benötigt
+        },
+        body: JSON.stringify({
+          ...address,
+          name: formData.name,
+          street: formData.street,
+          zipCode: formData.zipCode,
+          city: formData.city,
+          parentId: formData.parentId
+        })
+      });
+      
+      if (!response.ok) throw new Error('Update failed');
+      
+      const updatedAddress = await response.json();
+      
+      // Optimistisches UI-Update
+      handleEditAddress(updatedAddress);
+      toast.success('Adresse erfolgreich aktualisiert');
+    } catch (error) {
+      console.error('Fehler beim Bearbeiten:', error);
+      toast.error('Fehler beim Bearbeiten der Adresse');
+    } finally {
+      setIsEditing(false);
+      setShowEditForm(false);
+      setEditAddress(null);
+    }
+  };
+
+  // Erweiterter Delete-Handler
+  const handleDeleteAddressWithAPI = async (id: string) => {
+    try {
+      // Temporäre Adresse löschen (Client-Side)
+      const addressToDelete = customAddresses.find(addr => addr.id === id);
+      if (addressToDelete?.addressType === 'temporary') {
+        handleDeleteAddress(id);
+        toast.success('Temporäre Adresse gelöscht');
+        return;
+      }
+      
+      // Permanente Adresse löschen (API-Call)
+      const response = await fetch(`/api/addresses/${id}`, {
+        method: 'DELETE',
+        headers: {
+          // 'Authorization': `Bearer ${userToken}` // Falls Authentifizierung benötigt
+        }
+      });
+      
+      if (!response.ok) throw new Error('Delete failed');
+      
+      // Optimistisches UI-Update
+      handleDeleteAddress(id);
+      toast.success('Adresse erfolgreich gelöscht');
+    } catch (error) {
+      console.error('Fehler beim Löschen:', error);
+      toast.error('Fehler beim Löschen der Adresse');
+    }
+  };
+
+  // Handler für Edit-Submit
+  const handleEditSubmit = (updatedFormData: any) => {
+    if (editAddress?.addressType === 'temporary') {
+      // Client-seitige Aktualisierung für temporäre Adressen
+      const updatedAddress = { ...editAddress, ...updatedFormData };
+      handleEditAddress(updatedAddress);
+      toast.success('Temporäre Adresse aktualisiert');
+    } else {
+      // Server-seitige Aktualisierung für permanente Adressen
+      handleEditPermanent(editAddress);
+    }
+    
+    setShowEditForm(false);
+    setEditAddress(null);
+    setIsEditing(false);
+  };
 
   // Sprachsteuerung und Befehle Funktionen
   const handleVoiceCommand = () => {
@@ -449,8 +552,8 @@ const Step2: React.FC = () => {
             onStationToggle={handleStationToggle}
             onCustomToggle={handleCustomToggle}
             onAddAddress={handleAddAddress}
-            onDeleteAddress={handleDeleteAddress}
-            onEditAddress={handleEditAddress}
+            onDeleteAddress={handleDeleteAddressWithAPI}
+            onEditAddress={handleEditTemporary}
             onCancelAddForm={() => {
               setShowAddForm(false);
               setFormData({ name: '', street: '', zipCode: '', city: '', addressType: 'temporary', parentId: undefined });
@@ -458,6 +561,10 @@ const Step2: React.FC = () => {
             onToggleAddForm={() => setShowAddForm(!showAddForm)}
             onMarkerClick={handleMarkerClick}
             availablePraesidien={availablePraesidien}
+            currentUser={{ id: 'user-123', role: 'user' }}
+            editAddress={editAddress}
+            onEditSubmit={handleEditSubmit}
+            isEditing={isEditing}
           />
         </div>
       </motion.div>
