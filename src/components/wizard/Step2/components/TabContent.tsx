@@ -238,17 +238,22 @@ const TabContent: React.FC<TabContentProps> = ({
           </div>
 
           {/* Add Form */}
-          <CustomAddressForm
-            showAddForm={showAddForm}
-            formData={formData}
-            setFormData={setFormData}
-            onAddAddress={onAddAddress}
-            onCancel={onCancelAddForm}
-            availablePraesidien={availablePraesidien}
-            editAddress={editAddress}
-            onEditSubmit={onEditSubmit}
-            isEditing={isEditing}
-          />
+          <AnimatePresence mode="wait">
+            {showAddForm && (
+              <CustomAddressForm
+                key={editAddress ? `edit-${editAddress.id}` : 'add'}
+                showAddForm={showAddForm}
+                formData={formData}
+                setFormData={setFormData}
+                onAddAddress={onAddAddress}
+                onCancel={onCancelAddForm}
+                availablePraesidien={availablePraesidien}
+                editAddress={editAddress}
+                onEditSubmit={onEditSubmit}
+                isEditing={isEditing}
+              />
+            )}
+          </AnimatePresence>
 
           {/* Custom Addresses */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
